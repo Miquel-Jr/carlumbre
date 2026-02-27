@@ -1,0 +1,21 @@
+{
+    "name": "carlumbre",
+    "version": "1.0.0",
+    "description": "Mecanica Automotriz CarLumbre",
+    "main": "vite.config.js",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@prettier/plugin-php": "^0.24.0",
+        "prettier": "^3.8.1",
+        "vite": "^7.3.1"
+    },
+    "dependencies": {
+        "axios": "^1.13.5",
+        "sweetalert2": "^11.26.20"
+    }
+}

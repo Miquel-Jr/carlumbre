@@ -8,8 +8,8 @@ return [
     ],
     [
         'label' => 'Clientes',
-        'url' => '/customers',
-        'permission' => 'view_customers',
+        'url' => '/clients',
+        'permission' => 'view_clients',
     ],
     [
         'label' => 'Productos',
@@ -17,13 +17,23 @@ return [
         'permission' => 'view_products',
     ],
     [
-        'label' => 'Usuarios',
-        'url' => '/users',
-        'permission' => 'view_users',
+        'label' => 'Servicios',
+        'url' => '/services',
+        'permission' => 'view_services',
+    ],
+    [
+        'label' => 'Presupuestos',
+        'url' => '/quotes',
+        'permission' => 'view_quotes',
     ],
     [
         'label' => 'Orden de trabajo',
         'url' => '/work-orders',
         'permission' => 'view_ot',
+    ],
+    [
+        'label' => 'Usuarios',
+        'url' => '/users',
+        'permission' => 'view_users',
     ],
 ];

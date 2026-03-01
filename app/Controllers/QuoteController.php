@@ -218,7 +218,7 @@ class QuoteController
             return redirect('/quotes');
         }
 
-        $this->quoteModel->updateStatus($quoteId, ['status' => 'rejected']);
+        $this->quoteModel->updateStatus($quoteId, 'rejected');
         $_SESSION['success'] = 'Presupuesto rechazado exitosamente.';
         return redirect('/quotes');
     }

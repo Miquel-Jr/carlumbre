@@ -67,7 +67,7 @@
                                         <?php elseif ($quote['status'] === 'approved'): ?>
                                             <span class="badge bg-success">Aprobado</span>
                                         <?php elseif ($quote['status'] === 'rejected'): ?>
-                                            <span class="badge bg-danger">Rechazado</span>
+                                            <span class="badge bg-secondary">Rechazado</span>
                                         <?php endif; ?>
                                     </td>
 

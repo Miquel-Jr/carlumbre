@@ -29,6 +29,7 @@ $router->post('/services/store', 'ServiceController@store');
 $router->get('/services/edit', 'ServiceController@edit');
 $router->post('/services/update', 'ServiceController@update');
 $router->get('/services/delete', 'ServiceController@delete');
+$router->get('/services/whatsapp', 'WhatsappController@send');
 
 $router->get('/quotes', 'QuoteController@index');
 $router->get('/quotes/create', 'QuoteController@create');

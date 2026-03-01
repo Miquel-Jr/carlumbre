@@ -59,6 +59,10 @@
                                 <a class="btn btn-danger btn-sm btn-delete" onclick="deleteService('<?= $service['id'] ?>')">
                                     Eliminar
                                 </a>
+
+                                <a href="/services/whatsapp?id=<?= $service['id'] ?>" class="btn btn-sm btn-info">
+                                    Enviar WhatsApp
+                                </a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

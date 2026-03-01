@@ -1,0 +1,13 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Evita problemas con subcarpetas (si tu app no está en la raíz)
+    RewriteBase /
+
+    # Si el archivo o carpeta existe, servirlo normalmente
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Si no existe, redirigir todo a index.php
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>

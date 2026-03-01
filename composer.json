@@ -5,7 +5,7 @@
             "App\\": "app/"
         },
         "files": [
-            "app/core/Helpers.php"
+            "app/Core/Helpers.php"
         ]
     },
     "require": {

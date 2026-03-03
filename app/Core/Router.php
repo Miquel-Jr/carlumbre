@@ -25,7 +25,7 @@ class Router
 
         if (!$action) {
             http_response_code(404);
-            return view('404');
+            return view('errors/nopage');
         }
 
         [$controller, $method] = explode('@', $action);

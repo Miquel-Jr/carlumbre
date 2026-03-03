@@ -14,13 +14,6 @@
     <div class="container mt-5">
         <h1>Actualizar Cliente</h1>
 
-        <?php if (!empty($_SESSION['error'])): ?>
-        <div class="alert alert-danger">
-            <?= $_SESSION['error'];
-                unset($_SESSION['error']); ?>
-        </div>
-        <?php endif; ?>
-
         <form method="POST" action="/clients/update">
             <input type="hidden" name="id" value="<?= $client['id'] ?? '' ?>">
             <div class="mb-3">
@@ -58,5 +51,8 @@
         </form>
     </div>
 </body>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<?php view('partials/sweetalert'); ?>
 
 </html>

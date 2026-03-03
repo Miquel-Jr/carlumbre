@@ -21,6 +21,7 @@ $router->get('/clients/cars/create', 'CarController@create');
 $router->post('/clients/cars/store', 'CarController@store');
 $router->get('/clients/cars/edit', 'CarController@edit');
 $router->post('/clients/cars/update', 'CarController@update');
+$router->get('/clients/cars/delete', 'CarController@delete');
 $router->get('/clients/cars/delete-photo', 'CarPhotoController@deletePhoto');
 
 $router->get('/services', 'ServiceController@index');
@@ -43,3 +44,4 @@ $router->get('/quotes/pdf', 'QuoteController@generatePdf');
 
 $router->get('/notifications', 'NotificationController@index');
 $router->get('/notifications/resend', 'NotificationController@resend');
+$router->get('/notifications/delete', 'NotificationController@delete');

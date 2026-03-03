@@ -14,11 +14,6 @@
     <div class="container mt-5">
         <h1>Actualizar Servicio</h1>
 
-        <?php if (!empty($_SESSION['error'])): ?>
-            <div class="alert alert-danger"><?= $_SESSION['error'];
-                                            unset($_SESSION['error']); ?></div>
-        <?php endif; ?>
-
 
         <form action="/services/update" method="POST">
 
@@ -61,5 +56,8 @@
     </div>
 
 </body>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<?php view('partials/sweetalert'); ?>
 
 </html>

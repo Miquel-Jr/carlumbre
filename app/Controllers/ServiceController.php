@@ -10,7 +10,10 @@ use App\Models\Service;
 class ServiceController
 {
     private const ERROR_NOPAGE_VIEW = 'errors/nopage';
-    private const SERVICES_PATH = 'services';
+    private const VIEW_SERVICES = 'services/index';
+    private const VIEW_CREATE_SERVICE = 'services/create';
+    private const VIEW_EDIT_SERVICE = 'services/edit';
+    private const ROUTE_SERVICES = '/services';
 
     protected $serviceModel;
     protected $clientModel;
@@ -29,7 +32,7 @@ class ServiceController
         $services = $this->serviceModel->all();
         $clients = $this->clientModel->all();
 
-        return view('services/index', [
+        return view(self::VIEW_SERVICES, [
             'menu' => menu(),
             'services' => $services,
             'clients' => $clients
@@ -40,7 +43,7 @@ class ServiceController
     {
         (new AuthMiddleware())->handle();
         (new PermissionMiddleware('view_services'))->handle();
-        return view('services/create');
+        return view(self::VIEW_CREATE_SERVICE);
     }
 
     public function store()
@@ -55,7 +58,7 @@ class ServiceController
 
         if (empty($name) || !is_numeric($price) || $price < 0) {
             $_SESSION['error'] = 'Por favor, complete los campos obligatorios correctamente.';
-            return redirect('/services/create');
+            return redirect(self::VIEW_CREATE_SERVICE);
         }
 
         $this->serviceModel->create([
@@ -66,7 +69,7 @@ class ServiceController
         ]);
 
         $_SESSION['success'] = 'Servicio registrado correctamente.';
-        return redirect(self::SERVICES_PATH);
+        return redirect(self::ROUTE_SERVICES);
     }
 
     public function edit()
@@ -84,7 +87,7 @@ class ServiceController
             return view(self::ERROR_NOPAGE_VIEW);
         }
 
-        return view('services/edit', [
+        return view(self::VIEW_EDIT_SERVICE, [
             'service' => $service
         ]);
     }
@@ -102,13 +105,13 @@ class ServiceController
 
         if (!$id || empty($name) || !is_numeric($price) || $price < 0) {
             $_SESSION['error'] = 'Por favor, complete los campos obligatorios correctamente.';
-            return redirect('/services/edit?id=' . $id);
+            return redirect(self::VIEW_EDIT_SERVICE . '?id=' . $id);
         }
 
         $service = $this->serviceModel->find($id);
         if (!$service) {
             $_SESSION['error'] = 'Servicio no encontrado.';
-            return redirect('/services/edit?id=' . $id);
+            return redirect(self::VIEW_EDIT_SERVICE . '?id=' . $id);
         }
 
         $this->serviceModel->update($id, [
@@ -119,7 +122,7 @@ class ServiceController
         ]);
 
         $_SESSION['success'] = 'Servicio actualizado correctamente.';
-        return redirect(self::SERVICES_PATH);
+        return redirect(self::ROUTE_SERVICES);
     }
 
     public function delete()
@@ -133,6 +136,6 @@ class ServiceController
         }
         $this->serviceModel->delete($_GET['id'] ?? null);
         $_SESSION['success'] = 'Servicio eliminado correctamente.';
-        return redirect(self::SERVICES_PATH);
+        return redirect(self::ROUTE_SERVICES);
     }
 }

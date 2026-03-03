@@ -80,4 +80,22 @@ class NotificationController
 
         return redirect(self::ROUTE_NOTIFICATIONS);
     }
+
+    public function delete()
+    {
+        (new AuthMiddleware())->handle();
+        (new PermissionMiddleware('view_notifications'))->handle();
+
+        $notificationId = $_GET['id'] ?? null;
+        if (!$notificationId) {
+            $_SESSION['error'] = 'ID de notificación no proporcionado.';
+        } elseif (!$this->notificationModel->find($notificationId)) {
+            $_SESSION['error'] = 'Notificación no encontrada.';
+        } else {
+            $this->notificationModel->delete($notificationId);
+            $_SESSION['success'] = 'Notificación eliminada correctamente.';
+        }
+
+        return redirect(self::ROUTE_NOTIFICATIONS);
+    }
 }

@@ -22,7 +22,8 @@ class ClientController
     {
         (new AuthMiddleware())->handle();
         (new PermissionMiddleware('view_clients'))->handle();
-        $clients = $this->clientModel->all();
+        $search = trim($_GET['search'] ?? '');
+        $clients = $this->clientModel->all($search !== '' ? $search : null);
         return view('clients/index', ['menu' => menu(), 'clients' => $clients]);
     }
 

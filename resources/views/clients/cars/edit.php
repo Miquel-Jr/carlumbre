@@ -15,13 +15,6 @@
 
         <h2>Editar Auto de <?= htmlspecialchars($client['name']) ?></h2>
 
-        <?php if (!empty($_SESSION['error'])): ?>
-            <div class="alert alert-danger">
-                <?= $_SESSION['error'];
-                unset($_SESSION['error']); ?>
-            </div>
-        <?php endif; ?>
-
         <form action="/clients/cars/update" method="POST" enctype="multipart/form-data">
 
             <input type="hidden" name="car_id" value="<?= $car['id'] ?>">
@@ -102,7 +95,7 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <?php view('partials/sweetalert'); ?>
     <script>
         function deletePhoto(photoId, clientId, carId) {
 
@@ -144,6 +137,7 @@
                 reader.readAsDataURL(files[i]);
             }
         }
+
     </script>
 
 </body>

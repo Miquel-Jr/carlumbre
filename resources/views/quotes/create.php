@@ -84,7 +84,7 @@
                                 <option value="<?= $service['id'] ?>"
                                     data-name="<?= htmlspecialchars($service['name']) ?>"
                                     data-price="<?= $service['price'] ?>">
-                                    <?= $service['name'] ?> - $<?= number_format($service['price'], 2) ?>
+                                    <?= $service['name'] ?> - S/ <?= number_format($service['price'], 2) ?>
                                 </option>
                                 <?php endforeach; ?>
                             </select>
@@ -142,8 +142,7 @@
 
 </body>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-
+<?php view('partials/sweetalert'); ?>
 <script>
 const carPhotos = <?= json_encode($photos) ?>;
 let total = 0;

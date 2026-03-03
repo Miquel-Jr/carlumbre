@@ -18,13 +18,6 @@
 
         <h1>Autos de <?= htmlspecialchars($client['name']) ?></h1>
 
-        <?php if (!empty($_SESSION['error'])): ?>
-            <div class="alert alert-danger">
-                <?= $_SESSION['error'];
-                unset($_SESSION['error']); ?>
-            </div>
-        <?php endif; ?>
-
         <a href="/clients/cars/create?client_id=<?= $client['id'] ?>" class="btn btn-success mb-3">Agregar Auto</a>
 
         <table class="table table-striped table-bordered">
@@ -104,7 +97,7 @@
                             <td>
                                 <a href="/clients/cars/edit?id=<?= $car['id'] ?>&client_id=<?= $client['id'] ?>"
                                     class="btn btn-sm btn-warning">Editar</a>
-                                <a href="#" onclick="deleteCar(<?= $car['id'] ?>)" class="btn btn-sm btn-danger">Eliminar</a>
+                                <a onclick="deleteCar(<?= $car['id'] ?>, <?= $client['id'] ?>)" class="btn btn-sm btn-danger">Eliminar</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -121,10 +114,10 @@
     </div>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<?php view('partials/sweetalert'); ?>
 <script>
-    function deleteCar(id) {
-        const url = `/clients/cars/delete?id=${id}`;
+    function deleteCar(id, clientId) {
+        const url = `/clients/cars/delete?id=${id}&client_id=${clientId}`;
 
         Swal.fire({
             title: '¿Estás seguro de eliminar este auto?',
@@ -142,14 +135,6 @@
         });
     };
 
-    <?php if (isset($_SESSION['success'])): ?>
-        Swal.fire({
-            icon: 'success',
-            title: '¡Éxito!',
-            text: '<?= $_SESSION['success'] ?>'
-        });
-        <?php unset($_SESSION['success']); ?>
-    <?php endif; ?>
 </script>
 
 </html>

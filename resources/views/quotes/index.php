@@ -20,13 +20,6 @@
             </a>
         </div>
 
-        <?php if (!empty($_SESSION['success'])): ?>
-            <div class="alert alert-success">
-                <?= $_SESSION['success'];
-                unset($_SESSION['success']); ?>
-            </div>
-        <?php endif; ?>
-
         <div class="card shadow">
             <div class="card-body">
 
@@ -124,7 +117,7 @@
 
 </body>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<?php view('partials/sweetalert'); ?>
 <script>
     function deleteQuote(id) {
         Swal.fire({
@@ -176,6 +169,8 @@
             }
         });
     }
+
+    
 </script>
 
 </html>

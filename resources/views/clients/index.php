@@ -79,7 +79,7 @@
         </table>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <?php view('partials/sweetalert'); ?>
     <script>
         function deleteClient(id) {
             const url = `/clients/delete?id=${id}`;
@@ -100,14 +100,24 @@
             });
         };
 
-        <?php if (isset($_SESSION['success'])): ?>
-            Swal.fire({
-                icon: 'success',
-                title: '¡Éxito!',
-                text: '<?= $_SESSION['success'] ?>'
+        (function () {
+            const searchForm = document.querySelector('form[action="/clients"]');
+            const searchInput = searchForm?.querySelector('input[name="search"]');
+
+            if (!searchForm || !searchInput) {
+                return;
+            }
+
+            let debounceTimer;
+
+            searchInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function () {
+                    searchForm.submit();
+                }, 300);
             });
-            <?php unset($_SESSION['success']); ?>
-        <?php endif; ?>
+        })();
+
     </script>
 
 </body>

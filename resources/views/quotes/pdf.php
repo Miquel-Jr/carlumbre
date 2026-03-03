@@ -132,7 +132,7 @@
 
     <!-- DATOS DEL DOCUMENTO -->
     <div class="info-box">
-        <div class="section-title">Presupuesto #<?= $quote['id'] ?></div>
+        <div class="section-title">Presupuesto #<?= str_pad($quote['id'], 8, '0', STR_PAD_LEFT) ?></div>
         Fecha: <?= date('d/m/Y', strtotime($quote['created_at'])) ?><br>
     </div>
 
@@ -140,11 +140,15 @@
     <div class="info-box">
         <div class="section-title">Datos del Cliente</div>
         Nombre: <?= $quote['client_name'] ?><br>
+        <?= $quote['document_type'] === '1' ? 'DNI' : ($quote['document_type'] === '2' ? 'RUC' : 'PASAPORTE') ?>: <?= $quote['document_number'] ?><br>
         Email: <?= $quote['email'] ?><br>
+        Teléfono: <?= $quote['phone'] ?><br>
+        Dirección: <?= $quote['address'] ?><br>
+        
         Vehículo: <?= $quote['brand'] ?> <?= $quote['model'] ?> - <?= $quote['plate'] ?>
     </div>
 
-    <!-- TABLA -->
+
     <table>
         <thead>
             <tr>
@@ -159,15 +163,15 @@
                 <tr>
                     <td><?= $item['description'] ?></td>
                     <td><?= $item['quantity'] ?></td>
-                    <td>$<?= number_format($item['price'], 2) ?></td>
-                    <td>$<?= number_format($item['subtotal'], 2) ?></td>
+                    <td>S/ <?= number_format($item['price'], 2) ?></td>
+                    <td>S/ <?= number_format($item['subtotal'], 2) ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
 
     <div class="total-box">
-        TOTAL: $<?= number_format($quote['total'], 2) ?>
+        TOTAL: S/ <?= number_format($quote['total'], 2) ?>
     </div>
 
     <div style="margin-top:40px;">

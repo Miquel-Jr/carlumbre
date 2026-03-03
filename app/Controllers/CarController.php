@@ -187,10 +187,10 @@ class CarController
         }
 
         $stmt = $pdo->prepare("
-        UPDATE cars 
-        SET brand = ?, model = ?, year = ?, plate = ?, color = ?, updated_at = NOW()
-        WHERE id = ?
-    ");
+            UPDATE cars 
+            SET brand = ?, model = ?, year = ?, plate = ?, color = ?, updated_at = NOW()
+            WHERE id = ?
+        ");
 
         $stmt->execute([
             $brand,
@@ -241,5 +241,24 @@ class CarController
 
         $_SESSION['success'] = 'Auto actualizado correctamente.';
         return redirect('/clients/cars?id=' . $client_id);
+    }
+
+    public function delete()
+    {
+        (new AuthMiddleware())->handle();
+        (new PermissionMiddleware('view_clients'))->handle();
+
+        $id = $_GET['id'] ?? null;
+        $clientId = $_GET['client_id'] ?? null;
+
+        $car = $this->carModel->find($id);
+        if (!$car) {
+            return view('errors/nopage');
+        }
+
+        $this->carModel->delete($id);
+
+        $_SESSION['success'] = 'Auto eliminado correctamente.';
+        return redirect('/clients/cars?id=' . $clientId);
     }
 }

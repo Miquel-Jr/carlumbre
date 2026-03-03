@@ -17,6 +17,8 @@
 
         <form action="/quotes/update" method="POST">
 
+            <input type="hidden" name="id" value="<?= $quote['id'] ?? '' ?>">
+
             <!-- Cliente -->
             <div class="card mb-4">
                 <div class="card-header bg-dark text-white">
@@ -82,12 +84,12 @@
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <select id="serviceSelect" class="form-select">
-                                <option value="" disabled>Seleccionar servicio</option>
+                                <option value="" disabled selected>Seleccionar servicio</option>
                                 <?php foreach ($services as $service): ?>
                                     <option value="<?= $service['id'] ?>"
                                         data-name="<?= htmlspecialchars($service['name']) ?>"
                                         data-price="<?= $service['price'] ?>">
-                                        <?= $service['name'] ?> - $<?= number_format($service['price'], 2) ?>
+                                        <?= $service['name'] ?> - S/ <?= number_format($service['price'], 2) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -171,7 +173,7 @@
 
 </body>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<?php view('partials/sweetalert'); ?>
 
 <script>
     const carPhotos = <?= json_encode($photos) ?>;

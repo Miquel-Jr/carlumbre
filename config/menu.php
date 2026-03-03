@@ -27,6 +27,11 @@ return [
         'permission' => 'view_quotes',
     ],
     [
+        'label' => 'Notificaciones',
+        'url' => '/notifications',
+        'permission' => 'view_notifications',
+    ],
+    [
         'label' => 'Orden de trabajo',
         'url' => '/work-orders',
         'permission' => 'view_ot',

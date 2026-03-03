@@ -30,6 +30,22 @@ class Client
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
+    public function findByIds(array $ids): array
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), fn($id) => $id > 0));
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        $db = Database::connect();
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $db->prepare("SELECT * FROM {$this->table} WHERE id IN ({$placeholders}) ORDER BY created_at DESC");
+        $stmt->execute($ids);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public function findByEmail($email)
     {
         $db = Database::connect();

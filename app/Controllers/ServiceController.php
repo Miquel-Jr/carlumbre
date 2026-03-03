@@ -4,16 +4,21 @@ namespace App\Controllers;
 
 use App\Middleware\AuthMiddleware;
 use App\Middleware\PermissionMiddleware;
+use App\Models\Client;
 use App\Models\Service;
 
 class ServiceController
 {
+    private const ERROR_NOPAGE_VIEW = 'errors/nopage';
+    private const SERVICES_PATH = 'services';
 
     protected $serviceModel;
+    protected $clientModel;
 
     public function __construct()
     {
         $this->serviceModel = new Service();
+        $this->clientModel = new Client();
     }
 
     public function index()
@@ -22,10 +27,12 @@ class ServiceController
         (new PermissionMiddleware('view_services'))->handle();
 
         $services = $this->serviceModel->all();
+        $clients = $this->clientModel->all();
 
         return view('services/index', [
             'menu' => menu(),
-            'services' => $services
+            'services' => $services,
+            'clients' => $clients
         ]);
     }
 
@@ -59,7 +66,7 @@ class ServiceController
         ]);
 
         $_SESSION['success'] = 'Servicio registrado correctamente.';
-        return redirect('/services');
+        return redirect(self::SERVICES_PATH);
     }
 
     public function edit()
@@ -69,12 +76,12 @@ class ServiceController
 
         $id = $_GET['id'] ?? null;
         if (!$id) {
-            return view('error/nopage');
+            return view(self::ERROR_NOPAGE_VIEW);
         }
 
         $service = $this->serviceModel->find($id);
         if (!$service) {
-            return view('error/nopage');
+            return view(self::ERROR_NOPAGE_VIEW);
         }
 
         return view('services/edit', [
@@ -112,7 +119,7 @@ class ServiceController
         ]);
 
         $_SESSION['success'] = 'Servicio actualizado correctamente.';
-        return redirect('/services');
+        return redirect(self::SERVICES_PATH);
     }
 
     public function delete()
@@ -122,10 +129,10 @@ class ServiceController
 
         $id = $_GET['id'] ?? null;
         if (!$id) {
-            return view('error/nopage');
+            return view(self::ERROR_NOPAGE_VIEW);
         }
         $this->serviceModel->delete($_GET['id'] ?? null);
         $_SESSION['success'] = 'Servicio eliminado correctamente.';
-        return redirect('/services');
+        return redirect(self::SERVICES_PATH);
     }
 }

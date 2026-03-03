@@ -29,6 +29,7 @@ $router->post('/services/store', 'ServiceController@store');
 $router->get('/services/edit', 'ServiceController@edit');
 $router->post('/services/update', 'ServiceController@update');
 $router->get('/services/delete', 'ServiceController@delete');
+$router->post('/services/whatsapp', 'WhatsappController@send');
 
 $router->get('/quotes', 'QuoteController@index');
 $router->get('/quotes/create', 'QuoteController@create');
@@ -39,3 +40,6 @@ $router->get('/quotes/delete', 'QuoteController@delete');
 $router->get('/quotes/approve', 'QuoteController@approve');
 $router->get('/quotes/reject', 'QuoteController@reject');
 $router->get('/quotes/pdf', 'QuoteController@generatePdf');
+
+$router->get('/notifications', 'NotificationController@index');
+$router->get('/notifications/resend', 'NotificationController@resend');

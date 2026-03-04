@@ -8,6 +8,8 @@ $router->get('/dashboard', 'DashboardController@index');
 
 $router->get('/clients', 'ClientController@index');
 
+$router->get('/products', 'ProductController@index');
+
 $router->get('/clients/create', 'ClientController@create');
 $router->post('/clients/store', 'ClientController@store');
 

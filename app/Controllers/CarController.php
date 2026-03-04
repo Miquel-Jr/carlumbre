@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\CloudinaryStorage;
 use App\Core\Database;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\PermissionMiddleware;
@@ -12,11 +13,13 @@ class CarController
 {
     protected $clientModel;
     protected $carModel;
+    protected $cloudinaryStorage;
 
     public function __construct()
     {
         $this->clientModel = new Client();
         $this->carModel = new Car();
+        $this->cloudinaryStorage = new CloudinaryStorage();
     }
 
     public function index()
@@ -96,10 +99,7 @@ class CarController
         $car_id = $pdo->lastInsertId();
 
         $baseDir = __DIR__ . '/../../public/uploads/clients/' . $client_id . '/cars/' . $car_id . '/';
-
-        if (!is_dir($baseDir)) {
-            mkdir($baseDir, 0777, true);
-        }
+        $cloudinaryFolder = 'carlumbre/clients/' . $client_id . '/cars/' . $car_id;
 
         if (!empty($_FILES['photos']['name'][0])) {
             $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
@@ -117,12 +117,28 @@ class CarController
                     $extension = pathinfo($_FILES['photos']['name'][$key], PATHINFO_EXTENSION);
                     $fileName = uniqid() . '.' . $extension;
 
-                    $fullPath = $baseDir . $fileName;
-
-                    move_uploaded_file($tmpName, $fullPath);
-
                     // Ruta que se guarda en BD (pública)
-                    $dbPath = '/uploads/clients/' . $client_id . '/cars/' . $car_id . '/' . $fileName;
+                    $dbPath = null;
+
+                    if ($this->cloudinaryStorage->isEnabled()) {
+                        $dbPath = $this->cloudinaryStorage->uploadImage($tmpName, $cloudinaryFolder);
+
+                        if (!$dbPath) {
+                            continue;
+                        }
+                    } else {
+                        if (!is_dir($baseDir)) {
+                            mkdir($baseDir, 0777, true);
+                        }
+
+                        $fullPath = $baseDir . $fileName;
+
+                        if (!move_uploaded_file($tmpName, $fullPath)) {
+                            continue;
+                        }
+
+                        $dbPath = '/uploads/clients/' . $client_id . '/cars/' . $car_id . '/' . $fileName;
+                    }
 
                     $stmt = $pdo->prepare('
                     INSERT INTO car_photos (car_id, photo_path, created_at)
@@ -206,10 +222,7 @@ class CarController
             $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
             $baseDir = __DIR__ . '/../../public/uploads/clients/' . $client_id . '/cars/' . $car_id . '/';
-
-            if (!is_dir($baseDir)) {
-                mkdir($baseDir, 0777, true);
-            }
+            $cloudinaryFolder = 'carlumbre/clients/' . $client_id . '/cars/' . $car_id;
 
             foreach ($_FILES['photos']['tmp_name'] as $key => $tmpName) {
 
@@ -229,11 +242,28 @@ class CarController
                     $extension = pathinfo($_FILES['photos']['name'][$key], PATHINFO_EXTENSION);
                     $fileName  = uniqid() . '.' . $extension;
 
-                    $fullPath  = $baseDir . $fileName;
+                    $dbPath = null;
 
-                    move_uploaded_file($tmpName, $fullPath);
+                    if ($this->cloudinaryStorage->isEnabled()) {
+                        $dbPath = $this->cloudinaryStorage->uploadImage($tmpName, $cloudinaryFolder);
 
-                    $dbPath = '/uploads/clients/' . $client_id . '/cars/' . $car_id . '/' . $fileName;
+                        if (!$dbPath) {
+                            continue;
+                        }
+                    } else {
+                        if (!is_dir($baseDir)) {
+                            mkdir($baseDir, 0777, true);
+                        }
+
+                        $fullPath  = $baseDir . $fileName;
+
+                        if (!move_uploaded_file($tmpName, $fullPath)) {
+                            continue;
+                        }
+
+                        $dbPath = '/uploads/clients/' . $client_id . '/cars/' . $car_id . '/' . $fileName;
+                    }
+
                     $this->carModel->addPhoto($car_id, $dbPath);
                 }
             }

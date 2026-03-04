@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\CloudinaryStorage;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use App\Models\Car;
@@ -13,12 +14,14 @@ class CarPhotoController
   protected $clientModel;
   protected $carModel;
   protected $carPhotoModel;
+  protected $cloudinaryStorage;
 
   public function __construct()
   {
     $this->clientModel = new Client();
     $this->carModel = new Car();
     $this->carPhotoModel = new CarPhoto();
+    $this->cloudinaryStorage = new CloudinaryStorage();
   }
 
   public function index()
@@ -62,8 +65,7 @@ class CarPhotoController
     } elseif (!$photo = $this->carPhotoModel->find($photo_id)) {
       $_SESSION['error'] = 'La imagen no existe o ya fue eliminada.';
     } else {
-      $filePath = $this->buildPhotoFilePath($photo);
-      if ($this->deletePhotoFile($filePath)) {
+      if ($this->deletePhotoFile($photo)) {
         if (!$this->carPhotoModel->delete($photo_id)) {
           $_SESSION['error'] = 'No se pudo eliminar el registro de la imagen en la base de datos.';
         } else {
@@ -80,19 +82,46 @@ class CarPhotoController
     return $photo_id && $car_id && $client_id;
   }
 
-  private function buildPhotoFilePath($photo)
+  private function deletePhotoFile($photo)
   {
-    $publicPath = realpath(__DIR__ . '/../../public');
-    $relativePhotoPath = ltrim((string) ($photo['photo_path'] ?? ''), '/\\');
-    return $publicPath . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relativePhotoPath);
-  }
+    $photoPath = (string) ($photo['photo_path'] ?? '');
 
-  private function deletePhotoFile($filePath)
-  {
+    if ($this->isCloudinaryUrl($photoPath)) {
+      if ($this->cloudinaryStorage->isEnabled()) {
+        $this->cloudinaryStorage->deleteByUrl($photoPath);
+      }
+
+      return true;
+    }
+
+    $filePath = $this->buildLocalPhotoFilePath($photoPath);
+
     if (is_file($filePath) && !@unlink($filePath)) {
       $_SESSION['error'] = 'No se pudo eliminar el archivo físico de la imagen.';
       return false;
     }
+
     return true;
+  }
+
+  private function buildLocalPhotoFilePath($photoPath)
+  {
+    $publicPath = realpath(__DIR__ . '/../../public');
+    $relativePhotoPath = ltrim((string) $photoPath, '/\\');
+    return $publicPath . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relativePhotoPath);
+  }
+
+  private function isCloudinaryUrl($photoPath)
+  {
+    if (!is_string($photoPath) || $photoPath === '') {
+      return false;
+    }
+
+    $host = parse_url($photoPath, PHP_URL_HOST);
+    if (!is_string($host) || $host === '') {
+      return false;
+    }
+
+    return stripos($host, 'res.cloudinary.com') !== false;
   }
 }

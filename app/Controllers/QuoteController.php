@@ -11,6 +11,7 @@ use App\Models\Service;
 use App\Models\Quote;
 use App\Models\QuoteItems;
 use App\Models\Product;
+use App\Models\WorkOrder;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -25,6 +26,7 @@ class QuoteController
     protected $quoteModel;
     protected $quoteItemsModel;
     protected $productModel;
+    protected $workOrderModel;
     public function __construct()
     {
         $this->clientModel = new Client();
@@ -34,6 +36,7 @@ class QuoteController
         $this->quoteModel = new Quote();
         $this->quoteItemsModel = new QuoteItems();
         $this->productModel = new Product();
+        $this->workOrderModel = new WorkOrder();
     }
     public function index()
     {
@@ -303,7 +306,19 @@ class QuoteController
         }
 
         $this->quoteModel->updateStatus($quoteId, 'approved');
-        $_SESSION['success'] = 'Presupuesto aprobado exitosamente.';
+
+        $workOrderResult = $this->workOrderModel->createFromQuote((int) $quoteId);
+
+        if (!empty($workOrderResult['work_order_id'])) {
+            if (!empty($workOrderResult['created'])) {
+                $_SESSION['success'] = 'Presupuesto aprobado y OT #' . $workOrderResult['work_order_id'] . ' generada automáticamente.';
+            } else {
+                $_SESSION['success'] = 'Presupuesto aprobado. La OT #' . $workOrderResult['work_order_id'] . ' ya existía.';
+            }
+        } else {
+            $_SESSION['success'] = 'Presupuesto aprobado exitosamente.';
+        }
+
         return redirect(self::QUOTES_ROUTE);
     }
 

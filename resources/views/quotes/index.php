@@ -74,6 +74,12 @@
                   Descargar
                 </a>
 
+                <?php if ($quote['status'] === 'approved' && !empty($quote['work_order_id'])): ?>
+                <a href="/work-orders/show?id=<?= (int) $quote['work_order_id'] ?>" class="btn btn-sm btn-dark">
+                  Ver OT
+                </a>
+                <?php endif; ?>
+
                 <?php if ($quote['status'] === 'pending'): ?>
 
                 <a href="/quotes/edit?id=<?= $quote['id'] ?>" class="btn btn-sm btn-warning">

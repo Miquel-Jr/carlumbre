@@ -16,22 +16,26 @@ class Quote
         if ($search) {
             $stmt = $db->prepare("SELECT 
                 q.*,
+                wo.id AS work_order_id,
                 c.name AS client_name,
                 CONCAT(car.brand, ' ', car.model, ' - ', car.plate) AS car_info
             FROM quotes q
             JOIN clients c ON c.id = q.client_id
             JOIN cars car ON car.id = q.car_id
+            LEFT JOIN work_orders wo ON wo.quote_id = q.id
             WHERE c.name LIKE :search
             ORDER BY q.created_at DESC");
             $stmt->execute(['search' => "%{$search}%"]);
         } else {
             $stmt = $db->query("SELECT 
                 q.*,
+                wo.id AS work_order_id,
                 c.name AS client_name,
                 CONCAT(car.brand, ' ', car.model, ' - ', car.plate) AS car_info
             FROM quotes q
             JOIN clients c ON c.id = q.client_id
             JOIN cars car ON car.id = q.car_id
+            LEFT JOIN work_orders wo ON wo.quote_id = q.id
             ORDER BY q.created_at DESC");
         }
 

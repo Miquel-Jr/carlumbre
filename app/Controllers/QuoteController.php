@@ -10,6 +10,7 @@ use App\Models\Client;
 use App\Models\Service;
 use App\Models\Quote;
 use App\Models\QuoteItems;
+use App\Models\Product;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -23,6 +24,7 @@ class QuoteController
     protected $carPhotoModel;
     protected $quoteModel;
     protected $quoteItemsModel;
+    protected $productModel;
     public function __construct()
     {
         $this->clientModel = new Client();
@@ -31,6 +33,7 @@ class QuoteController
         $this->carPhotoModel = new CarPhoto();
         $this->quoteModel = new Quote();
         $this->quoteItemsModel = new QuoteItems();
+        $this->productModel = new Product();
     }
     public function index()
     {
@@ -48,9 +51,10 @@ class QuoteController
         $clients = $this->clientModel->all();
         $cars = $this->carModel->all();
         $services = $this->serviceModel->all();
+        $products = $this->productModel->all();
         $photos = $this->carPhotoModel->all();
 
-        return view('quotes/create', ['clients' => $clients, 'cars' => $cars, 'services' => $services, 'photos' => $photos]);
+        return view('quotes/create', ['clients' => $clients, 'cars' => $cars, 'services' => $services, 'products' => $products, 'photos' => $photos]);
     }
 
     public function store()
@@ -65,7 +69,8 @@ class QuoteController
         $notes = $_POST['notes'] ?? null;
 
         if (!$clientId || !$carId || !$total) {
-            $_SESSION['error'] = 'El cliente, el coche y el total son campos obligatorios.';
+            $_SESSION['error'] = 'El cliente, el coche y el total son campos obligatorios.'. $clientId. '-' . $carId . '-' . $total;
+
             return redirect(self::QUOTES_ROUTE . '/create');
         }
 
@@ -81,15 +86,61 @@ class QuoteController
         $descripcions = $_POST['descriptions'] ?? [];
         $quantities = $_POST['quantities'] ?? [];
         $prices = $_POST['prices'] ?? [];
+        $hasWarranties = $_POST['has_warranties'] ?? [];
+        $warrantyTimes = $_POST['warranty_times'] ?? [];
+        $partIds = $_POST['part_ids'] ?? [];
+        $partDescriptions = $_POST['part_descriptions'] ?? [];
+        $partQuantities = $_POST['part_quantities'] ?? [];
+        $partPrices = $_POST['part_prices'] ?? [];
+        $partImages = $_POST['part_images'] ?? [];
 
         foreach ($services as $index => $serviceId) {
+            if (empty($serviceId)) {
+                continue;
+            }
+
+            $hasWarranty = (int) ($hasWarranties[$index] ?? 0) === 1 ? 1 : 0;
+            $warrantyTimeBase = null;
+
+            if ($hasWarranty === 1) {
+                $candidateTime = (int) ($warrantyTimes[$index] ?? 0);
+                $warrantyTimeBase = $candidateTime > 0 ? $candidateTime : 1;
+            }
+
             $this->quoteItemsModel->create([
                 'quote_id' => $quoteId,
                 'service_id' => $serviceId,
+                'item_type' => 'service',
                 'description' => $descripcions[$index] ?? '',
                 'quantity' => $quantities[$index] ?? 1,
                 'price' => $prices[$index] ?? 0,
-                'subtotal' => ($quantities[$index] ?? 1) * ($prices[$index] ?? 0)
+                'subtotal' => ($quantities[$index] ?? 1) * ($prices[$index] ?? 0),
+                'has_warranty' => $hasWarranty,
+                'warranty_time_base' => $warrantyTimeBase
+            ]);
+        }
+
+        foreach ($partIds as $index => $partId) {
+            $partDescription = trim((string) ($partDescriptions[$index] ?? ''));
+            $partQuantity = (int) ($partQuantities[$index] ?? 1);
+            $partPrice = (float) ($partPrices[$index] ?? 0);
+
+            if ($partDescription === '' || $partQuantity < 1) {
+                continue;
+            }
+
+            $this->quoteItemsModel->create([
+                'quote_id' => $quoteId,
+                'service_id' => null,
+                'product_id' => !empty($partId) ? (int) $partId : null,
+                'item_type' => 'product',
+                'description' => $partDescription,
+                'quantity' => $partQuantity,
+                'price' => $partPrice,
+                'subtotal' => $partQuantity * $partPrice,
+                'has_warranty' => 0,
+                'warranty_time_base' => null,
+                'reference_image_url' => trim((string) ($partImages[$index] ?? '')) ?: null
             ]);
         }
 
@@ -117,10 +168,11 @@ class QuoteController
         $clients = $this->clientModel->all();
         $cars = $this->carModel->all();
         $services = $this->serviceModel->all();
+        $products = $this->productModel->all();
         $photos = $this->carPhotoModel->all();
         $items = $this->quoteItemsModel->getByQuoteId($quoteId);
 
-        return view('quotes/edit', ['quote' => $quote, 'clients' => $clients, 'cars' => $cars, 'services' => $services, 'photos' => $photos, 'items' => $items]);
+        return view('quotes/edit', ['quote' => $quote, 'clients' => $clients, 'cars' => $cars, 'services' => $services, 'products' => $products, 'photos' => $photos, 'items' => $items]);
     }
 
     public function update()
@@ -139,7 +191,7 @@ class QuoteController
         $notes = $_POST['notes'] ?? null;
 
         if (!$clientId || !$carId || !$total) {
-            $_SESSION['error'] = 'El cliente, el coche y el total son campos obligatorios.';
+            $_SESSION['error'] = 'El cliente, el coche y el total son campos obligatorios.'. $clientId. '-' . $carId . '-' . $total;
             return redirect(self::QUOTES_ROUTE . '/edit?id=' . $quoteId);
         }
 
@@ -159,18 +211,64 @@ class QuoteController
         $descriptions = $_POST['descriptions'] ?? [];
         $quantities = $_POST['quantities'] ?? [];
         $prices = $_POST['prices'] ?? [];
+        $hasWarranties = $_POST['has_warranties'] ?? [];
+        $warrantyTimes = $_POST['warranty_times'] ?? [];
+        $partIds = $_POST['part_ids'] ?? [];
+        $partDescriptions = $_POST['part_descriptions'] ?? [];
+        $partQuantities = $_POST['part_quantities'] ?? [];
+        $partPrices = $_POST['part_prices'] ?? [];
+        $partImages = $_POST['part_images'] ?? [];
 
         foreach ($services as $index => $serviceId) {
+            if (empty($serviceId)) {
+                continue;
+            }
+
             if (isset($descriptions[$index]) && isset($quantities[$index]) && isset($prices[$index])) {
+                $hasWarranty = (int) ($hasWarranties[$index] ?? 0) === 1 ? 1 : 0;
+                $warrantyTimeBase = null;
+
+                if ($hasWarranty === 1) {
+                    $candidateTime = (int) ($warrantyTimes[$index] ?? 0);
+                    $warrantyTimeBase = $candidateTime > 0 ? $candidateTime : 1;
+                }
+
                 $this->quoteItemsModel->create([
                     'quote_id' => $quoteId,
                     'service_id' => $serviceId,
+                    'item_type' => 'service',
                     'description' => htmlspecialchars($descriptions[$index]),
                     'quantity' => (int)$quantities[$index],
                     'price' => (float)$prices[$index],
-                    'subtotal' => (int)$quantities[$index] * (float)$prices[$index]
+                    'subtotal' => (int)$quantities[$index] * (float)$prices[$index],
+                    'has_warranty' => $hasWarranty,
+                    'warranty_time_base' => $warrantyTimeBase
                 ]);
             }
+        }
+
+        foreach ($partIds as $index => $partId) {
+            $partDescription = trim((string) ($partDescriptions[$index] ?? ''));
+            $partQuantity = (int) ($partQuantities[$index] ?? 1);
+            $partPrice = (float) ($partPrices[$index] ?? 0);
+
+            if ($partDescription === '' || $partQuantity < 1) {
+                continue;
+            }
+
+            $this->quoteItemsModel->create([
+                'quote_id' => $quoteId,
+                'service_id' => null,
+                'product_id' => !empty($partId) ? (int) $partId : null,
+                'item_type' => 'product',
+                'description' => htmlspecialchars($partDescription),
+                'quantity' => $partQuantity,
+                'price' => $partPrice,
+                'subtotal' => $partQuantity * $partPrice,
+                'has_warranty' => 0,
+                'warranty_time_base' => null,
+                'reference_image_url' => trim((string) ($partImages[$index] ?? '')) ?: null
+            ]);
         }
 
         $_SESSION['success'] = 'Presupuesto actualizado exitosamente.';

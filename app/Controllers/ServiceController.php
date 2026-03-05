@@ -55,17 +55,34 @@ class ServiceController
         $description = $_POST['description'] ?? '';
         $price = $_POST['price'] ?? 0;
         $status = $_POST['status'] ?? 1;
+        $hasWarranty = (int) ($_POST['has_warranty'] ?? 0) === 1 ? 1 : 0;
+        $warrantyTimeBaseRaw = trim($_POST['warranty_time_base'] ?? '');
+        $warrantyTimeBase = null;
 
         if (empty($name) || !is_numeric($price) || $price < 0) {
             $_SESSION['error'] = 'Por favor, complete los campos obligatorios correctamente.';
             return redirect(self::VIEW_CREATE_SERVICE);
         }
 
+        if ($warrantyTimeBaseRaw !== '') {
+            if (!ctype_digit($warrantyTimeBaseRaw) || (int) $warrantyTimeBaseRaw < 1) {
+                $_SESSION['error'] = 'El tiempo base de garantía debe ser un número entero mayor a 0.';
+                return redirect(self::VIEW_CREATE_SERVICE);
+            }
+            $warrantyTimeBase = (int) $warrantyTimeBaseRaw;
+        }
+
+        if ($hasWarranty === 0) {
+            $warrantyTimeBase = null;
+        }
+
         $this->serviceModel->create([
             'name' => $name,
             'description' => $description,
             'price' => $price,
-            'status' => $status
+            'status' => $status,
+            'has_warranty' => $hasWarranty,
+            'warranty_time_base' => $warrantyTimeBase
         ]);
 
         $_SESSION['success'] = 'Servicio registrado correctamente.';
@@ -102,10 +119,25 @@ class ServiceController
         $description = $_POST['description'] ?? '';
         $price = $_POST['price'] ?? 0;
         $status = $_POST['status'] ?? 1;
+        $hasWarranty = (int) ($_POST['has_warranty'] ?? 0) === 1 ? 1 : 0;
+        $warrantyTimeBaseRaw = trim($_POST['warranty_time_base'] ?? '');
+        $warrantyTimeBase = null;
 
         if (!$id || empty($name) || !is_numeric($price) || $price < 0) {
             $_SESSION['error'] = 'Por favor, complete los campos obligatorios correctamente.';
             return redirect(self::VIEW_EDIT_SERVICE . '?id=' . $id);
+        }
+
+        if ($warrantyTimeBaseRaw !== '') {
+            if (!ctype_digit($warrantyTimeBaseRaw) || (int) $warrantyTimeBaseRaw < 1) {
+                $_SESSION['error'] = 'El tiempo base de garantía debe ser un número entero mayor a 0.';
+                return redirect(self::VIEW_EDIT_SERVICE . '?id=' . $id);
+            }
+            $warrantyTimeBase = (int) $warrantyTimeBaseRaw;
+        }
+
+        if ($hasWarranty === 0) {
+            $warrantyTimeBase = null;
         }
 
         $service = $this->serviceModel->find($id);
@@ -118,7 +150,9 @@ class ServiceController
             'name' => $name,
             'description' => $description,
             'price' => $price,
-            'status' => $status
+            'status' => $status,
+            'has_warranty' => $hasWarranty,
+            'warranty_time_base' => $warrantyTimeBase
         ]);
 
         $_SESSION['success'] = 'Servicio actualizado correctamente.';

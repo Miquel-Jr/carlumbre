@@ -3,7 +3,27 @@ if (!function_exists('view')) {
     function view(string $path, array $data = [])
     {
         extract($data);
+
+        ob_start();
         require __DIR__ . "/../../resources/views/{$path}.php";
+        $content = ob_get_clean();
+
+        $headTags = [
+            '<meta name="theme-color" content="#000000">',
+            '<meta name="msapplication-navbutton-color" content="#000000">',
+            '<meta name="apple-mobile-web-app-status-bar-style" content="black">',
+            '<link rel="shortcut icon" href="/assets/carlumbre/Icon.jpeg">',
+            '<link rel="icon" type="image/jpeg" href="/assets/carlumbre/Icon.jpeg">',
+            '<link rel="apple-touch-icon" href="/assets/carlumbre/Icon.jpeg">',
+        ];
+
+        foreach ($headTags as $headTag) {
+            if (stripos($content, $headTag) === false && stripos($content, '</head>') !== false) {
+                $content = preg_replace('/<\/head>/i', "    {$headTag}\n</head>", $content, 1);
+            }
+        }
+
+        echo $content;
     }
 }
 

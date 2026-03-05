@@ -2,173 +2,257 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Actualizar Presupuesto | Carlumbre</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Actualizar Presupuesto | Carlumbre</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body>
 
-    <?php view('partials/menu'); ?>
+  <?php view('partials/menu'); ?>
 
-    <div class="container mt-5">
+  <div class="container mt-5">
 
-        <h2 class="mb-4">Actualizar Presupuesto</h2>
+    <h2 class="mb-4">Actualizar Presupuesto</h2>
 
-        <form action="/quotes/update" method="POST">
+    <form action="/quotes/update" method="POST">
 
-            <input type="hidden" name="id" value="<?= $quote['id'] ?? '' ?>">
+      <input type="hidden" name="id" value="<?= $quote['id'] ?? '' ?>">
 
-            <!-- Cliente -->
-            <div class="card mb-4">
-                <div class="card-header bg-dark text-white">
-                    Información General
-                </div>
-                <div class="card-body">
+      <!-- Cliente -->
+      <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+          Información General
+        </div>
+        <div class="card-body">
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Cliente *</label>
-                            <select name="client_id" id="clientSelect" class="form-select" required>
-                                <option value="" disabled>Seleccionar cliente</option>
-                                <?php foreach ($clients as $client): ?>
-                                    <option value="<?= $client['id'] ?>"
-                                        <?= $quote['client_id'] == $client['id'] ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($client['name']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Auto *</label>
-                            <select name="car_id" id="carSelect" class="form-select" required>
-                                <option value="" disabled>Seleccionar auto</option>
-                                <?php foreach ($cars as $car): ?>
-                                    <option value="<?= $car['id'] ?>" data-client="<?= $car['client_id'] ?>"
-                                        <?= $quote['car_id'] == $car['id'] ? 'selected' : '' ?>>
-                                        <?= $car['brand'] ?> <?= $car['model'] ?> - <?= $car['plate'] ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div id="carGalleryContainer">
-                                    <div class="alert alert-secondary">
-                                        Selecciona un auto para ver su galería.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Notas</label>
-                        <textarea name="notes" class="form-control"
-                            rows="3"><?= htmlspecialchars($quote['notes'] ?? '') ?></textarea>
-                    </div>
-
-                </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="clientSelect" class="form-label">Cliente *</label>
+              <select name="client_id" id="clientSelect" class="form-select" required>
+                <option value="" disabled>Seleccionar cliente</option>
+                <?php foreach ($clients as $client): ?>
+                <option value="<?= $client['id'] ?>" <?= $quote['client_id'] == $client['id'] ? 'selected' : '' ?>>
+                  <?= htmlspecialchars($client['name']) ?>
+                </option>
+                <?php endforeach; ?>
+              </select>
             </div>
 
-            <!-- Servicios -->
-            <div class="card mb-4">
-                <div class="card-header bg-dark text-white">
-                    Servicios
-                </div>
-                <div class="card-body">
-
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <select id="serviceSelect" class="form-select">
-                                <option value="" disabled selected>Seleccionar servicio</option>
-                                <?php foreach ($services as $service): ?>
-                                    <option value="<?= $service['id'] ?>"
-                                        data-name="<?= htmlspecialchars($service['name']) ?>"
-                                        data-price="<?= $service['price'] ?>">
-                                        <?= $service['name'] ?> - S/ <?= number_format($service['price'], 2) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="col-md-2">
-                            <input type="number" id="quantity" class="form-control" value="1" min="1">
-                        </div>
-
-                        <div class="col-md-2">
-                            <input type="number" id="priceInput" class="form-control" placeholder="Precio" step="0.01"
-                                min="0">
-                        </div>
-
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-success w-100" onclick="addService()">
-                                Agregar
-                            </button>
-                        </div>
-                    </div>
-
-
-                    <table class="table table-bordered" id="servicesTable">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Servicio</th>
-                                <th>Cantidad</th>
-                                <th>Precio</th>
-                                <th>Subtotal</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($items as $item): ?>
-                                <tr>
-                                    <td>
-                                        <?= htmlspecialchars($item['description']) ?>
-                                        <input type="hidden" name="services[]" value="<?= $item['service_id'] ?>">
-                                        <input type="hidden" name="descriptions[]"
-                                            value="<?= htmlspecialchars($item['description']) ?>">
-                                    </td>
-                                    <td>
-                                        <?= $item['quantity'] ?>
-                                        <input type="hidden" name="quantities[]" value="<?= $item['quantity'] ?>">
-                                    </td>
-                                    <td>
-                                        S/ <?= number_format($item['price'], 2) ?>
-                                        <input type="hidden" name="prices[]" value="<?= $item['price'] ?>">
-                                    </td>
-                                    <td>S/ <?= number_format($item['subtotal'], 2) ?></td>
-                                    <td>
-                                        <button type="button" class="btn btn-sm btn-danger"
-                                            onclick="removeRow(this, <?= $item['subtotal'] ?>)">
-                                            X
-                                        </button>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-
-                    <div class="text-end">
-                        <h4>Total: S/ <span id="totalAmount"><?= number_format($quote['total'] ?? 0, 2) ?></span></h4>
-                    </div>
-
-                    <input type="hidden" name="total" id="totalInput">
-
-                </div>
+            <div class="col-md-6">
+              <label for="carSelect" class="form-label">Auto *</label>
+              <select name="car_id" id="carSelect" class="form-select" required>
+                <option value="" disabled>Seleccionar auto</option>
+                <?php foreach ($cars as $car): ?>
+                <option value="<?= $car['id'] ?>" data-client="<?= $car['client_id'] ?>"
+                  <?= $quote['car_id'] == $car['id'] ? 'selected' : '' ?>>
+                  <?= $car['brand'] ?> <?= $car['model'] ?> - <?= $car['plate'] ?>
+                </option>
+                <?php endforeach; ?>
+              </select>
             </div>
 
-
-            <div class="text-end">
-                <a href="/quotes" class="btn btn-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-warning">Actualizar Presupuesto</button>
+            <div class="row mt-4">
+              <div class="col-12">
+                <div id="carGalleryContainer">
+                  <div class="alert alert-secondary">
+                    Selecciona un auto para ver su galería.
+                  </div>
+                </div>
+              </div>
             </div>
 
-        </form>
+          </div>
 
-    </div>
+          <div class="mb-3">
+            <label for="notesTextarea" class="form-label">Notas</label>
+            <textarea id="notesTextarea" name="notes" class="form-control"
+              rows="3"><?= htmlspecialchars($quote['notes'] ?? '') ?></textarea>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Servicios -->
+      <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+          Servicios
+        </div>
+        <div class="card-body">
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <select id="serviceSelect" class="form-select">
+                <option value="" disabled selected>Seleccionar servicio</option>
+                <?php foreach ($services as $service): ?>
+                <option value="<?= $service['id'] ?>" data-name="<?= htmlspecialchars($service['name']) ?>"
+                  data-price="<?= $service['price'] ?>" data-has-warranty="<?= (int) ($service['has_warranty'] ?? 0) ?>"
+                  data-warranty-time="<?= (int) ($service['warranty_time_base'] ?? 0) ?>">
+                  <?= $service['name'] ?> - S/ <?= number_format($service['price'], 2) ?>
+                </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <div class="col-md-2">
+              <input type="number" id="quantity" class="form-control" value="1" min="1">
+            </div>
+
+            <div class="col-md-2">
+              <input type="number" id="priceInput" class="form-control" placeholder="Precio" step="0.01" min="0">
+            </div>
+
+            <div class="col-md-2">
+              <button type="button" class="btn btn-success w-100" onclick="addService()">
+                Agregar
+              </button>
+            </div>
+          </div>
+
+          <hr>
+
+          <h6 class="mb-3">Autopartes referenciales (opcional)</h6>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <select id="partSelect" class="form-select">
+                <option value="">Seleccionar autoparte</option>
+                <?php foreach ($products as $product): ?>
+                <option value="<?= $product['id'] ?>" data-name="<?= htmlspecialchars($product['name']) ?>"
+                  data-image="<?= htmlspecialchars($product['image_2d'] ?? '') ?>">
+                  <?= htmlspecialchars($product['name']) ?>
+                </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+
+            <div class="col-md-2">
+              <input type="number" id="partQuantity" class="form-control" value="1" min="1">
+            </div>
+
+            <div class="col-md-2">
+              <input type="number" id="partPriceInput" class="form-control" placeholder="Precio" step="0.01" min="0">
+            </div>
+
+            <div class="col-md-2">
+              <button type="button" class="btn btn-primary w-100" onclick="addPart()">
+                Agregar Autoparte
+              </button>
+            </div>
+          </div>
+
+
+          <table class="table table-bordered" id="servicesTable">
+            <thead class="table-light">
+              <tr>
+                <th>Servicio</th>
+                <th>Referencia</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Garantía</th>
+                <th>Subtotal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($items as $item): ?>
+              <tr>
+                <td>
+                  <?= htmlspecialchars($item['description']) ?>
+                  <?php $isProductItem = ($item['item_type'] ?? '') === 'product' || !empty($item['product_id']); ?>
+
+                  <?php if (!$isProductItem): ?>
+                  <input type="hidden" name="services[]" value="<?= $item['service_id'] ?>">
+                  <input type="hidden" name="descriptions[]" value="<?= htmlspecialchars($item['description']) ?>">
+                  <input type="hidden" name="quantities[]" value="<?= $item['quantity'] ?>">
+                  <input type="hidden" name="prices[]" value="<?= $item['price'] ?>">
+
+                  <input type="hidden" name="part_ids[]" value="">
+                  <input type="hidden" name="part_descriptions[]" value="">
+                  <input type="hidden" name="part_quantities[]" value="">
+                  <input type="hidden" name="part_prices[]" value="">
+                  <input type="hidden" name="part_images[]" value="">
+                  <?php else: ?>
+                  <input type="hidden" name="services[]" value="">
+                  <input type="hidden" name="descriptions[]" value="">
+                  <input type="hidden" name="quantities[]" value="">
+                  <input type="hidden" name="prices[]" value="">
+
+                  <input type="hidden" name="part_ids[]" value="<?= (int)($item['product_id'] ?? 0) ?>">
+                  <input type="hidden" name="part_descriptions[]" value="<?= htmlspecialchars($item['description']) ?>">
+                  <input type="hidden" name="part_quantities[]" value="<?= $item['quantity'] ?>">
+                  <input type="hidden" name="part_prices[]" value="<?= $item['price'] ?>">
+                  <input type="hidden" name="part_images[]"
+                    value="<?= htmlspecialchars($item['reference_image_url'] ?? '') ?>">
+                  <?php endif; ?>
+                </td>
+                <td>
+                  <?php if (!empty($item['reference_image_url'])): ?>
+                  <img src="<?= htmlspecialchars($item['reference_image_url']) ?>"
+                    alt="<?= htmlspecialchars($item['description']) ?>"
+                    style="width:80px;height:60px;object-fit:cover;border:1px solid #ddd;border-radius:4px;">
+                  <?php else: ?>
+                  <span class="text-muted">Servicio</span>
+                  <?php endif; ?>
+                </td>
+                <td>
+                  <?= $item['quantity'] ?>
+                </td>
+                <td>
+                  S/ <?= number_format($item['price'], 2) ?>
+                </td>
+                <td>
+                  <?php $itemHasWarranty = (int)($item['has_warranty'] ?? 0); ?>
+                  <?php $itemWarrantyTime = (int)($item['warranty_time_base'] ?? 0); ?>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="badge <?= $itemHasWarranty === 1 ? 'bg-success' : 'bg-secondary' ?>">
+                      <?= $itemHasWarranty === 1 ? 'Sí' : 'No' ?>
+                    </span>
+                    <input type="hidden" name="has_warranties[]" value="<?= $isProductItem ? 0 : $itemHasWarranty ?>">
+                    <?php if ($itemHasWarranty === 1 && !$isProductItem): ?>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                      onclick="changeWarrantyTime(this, -1)">-</button>
+                    <span class="fw-semibold warranty-time-label"><?= max(1, $itemWarrantyTime) ?> meses</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                      onclick="changeWarrantyTime(this, 1)">+</button>
+                    <input type="hidden" name="warranty_times[]" value="<?= max(1, $itemWarrantyTime) ?>"
+                      class="warranty-time-input">
+                    <?php else: ?>
+                    <span class="text-muted"><?= $isProductItem ? 'No aplica' : 'Sin garantía' ?></span>
+                    <input type="hidden" name="warranty_times[]" value="">
+                    <?php endif; ?>
+                  </div>
+                </td>
+                <td>S/ <?= number_format($item['subtotal'], 2) ?></td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-danger"
+                    onclick="removeRow(this, <?= $item['subtotal'] ?>)">
+                    X
+                  </button>
+                </td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+
+          <div class="text-end">
+            <h4>Total: S/ <span id="totalAmount"><?= number_format($quote['total'] ?? 0, 2) ?></span></h4>
+          </div>
+
+          <input type="hidden" name="total" id="totalInput" value="<?= $quote['total'] ?? 0 ?>">
+
+        </div>
+      </div>
+
+
+      <div class="text-end">
+        <a href="/quotes" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-warning">Actualizar Presupuesto</button>
+      </div>
+
+    </form>
+
+  </div>
 
 
 </body>
@@ -176,37 +260,48 @@
 <?php view('partials/sweetalert'); ?>
 
 <script>
-    const carPhotos = <?= json_encode($photos) ?>;
-    const quote = <?= json_encode($quote) ?>;
-    let total = Number(quote.total) || 0;
+const carPhotos = <?= json_encode($photos) ?>;
+const quote = <?= json_encode($quote) ?>;
+let total = Number(quote.total) || 0;
 
-    function addService() {
+function addService() {
 
-        const select = document.getElementById("serviceSelect");
-        const quantity = parseInt(document.getElementById("quantity").value);
-        const price = parseFloat(document.getElementById("priceInput").value);
+  const select = document.getElementById("serviceSelect");
+  const quantity = parseInt(document.getElementById("quantity").value);
+  const price = parseFloat(document.getElementById("priceInput").value);
 
-        if (!select.value || !quantity || !price) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Por favor, completa todos los campos del servicio.'
-            })
-            return;
-        }
+  if (!select.value || !quantity || !price) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Por favor, completa todos los campos del servicio.'
+    })
+    return;
+  }
 
-        const name = select.options[select.selectedIndex].dataset.name;
-        const subtotal = quantity * price;
+  const name = select.options[select.selectedIndex].dataset.name;
+  const hasWarranty = parseInt(select.options[select.selectedIndex].dataset.hasWarranty || '0');
+  const defaultWarrantyTime = parseInt(select.options[select.selectedIndex].dataset.warrantyTime || '0');
+  const initialWarrantyTime = hasWarranty ? Math.max(defaultWarrantyTime, 1) : 0;
+  const subtotal = quantity * price;
 
-        total += subtotal;
-        updateTotal();
+  total += subtotal;
+  updateTotal();
 
-        const row = `
+  const row = `
         <tr>
             <td>
                 ${name}
                 <input type="hidden" name="services[]" value="${select.value}">
                 <input type="hidden" name="descriptions[]" value="${name}">
+                <input type="hidden" name="part_ids[]" value="">
+                <input type="hidden" name="part_descriptions[]" value="">
+                <input type="hidden" name="part_quantities[]" value="">
+                <input type="hidden" name="part_prices[]" value="">
+                <input type="hidden" name="part_images[]" value="">
+            </td>
+            <td>
+                <span class="text-muted">Servicio</span>
             </td>
             <td>
                 ${quantity}
@@ -215,6 +310,21 @@
             <td>
                 S/ ${price.toFixed(2)}
                 <input type="hidden" name="prices[]" value="${price}">
+            </td>
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge ${hasWarranty ? 'bg-success' : 'bg-secondary'}">${hasWarranty ? 'Sí' : 'No'}</span>
+                    <input type="hidden" name="has_warranties[]" value="${hasWarranty}">
+                    ${hasWarranty ? `
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="changeWarrantyTime(this, -1)">-</button>
+                    <span class="fw-semibold warranty-time-label">${initialWarrantyTime} meses</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="changeWarrantyTime(this, 1)">+</button>
+                    <input type="hidden" name="warranty_times[]" value="${initialWarrantyTime}" class="warranty-time-input">
+                    ` : `
+                    <span class="text-muted">Sin garantía</span>
+                    <input type="hidden" name="warranty_times[]" value="">
+                    `}
+                </div>
             </td>
             <td>S/ ${subtotal.toFixed(2)}</td>
             <td>
@@ -226,66 +336,139 @@
             </td>
         </tr>`;
 
-        document.querySelector("#servicesTable tbody")
-            .insertAdjacentHTML("beforeend", row);
+  document.querySelector("#servicesTable tbody")
+    .insertAdjacentHTML("beforeend", row);
 
-        // Reset campos
-        select.value = "";
-        document.getElementById("quantity").value = 1;
-        document.getElementById("priceInput").value = "";
-    }
+  // Reset campos
+  select.value = "";
+  document.getElementById("quantity").value = 1;
+  document.getElementById("priceInput").value = "";
+}
 
+function addPart() {
+  const select = document.getElementById("partSelect");
+  const quantity = parseInt(document.getElementById("partQuantity").value);
+  const price = parseFloat(document.getElementById("partPriceInput").value);
 
-    function removeRow(button, subtotal) {
-        button.closest("tr").remove();
-        total -= subtotal;
-        updateTotal();
-    }
-
-    function updateTotal() {
-        document.getElementById("totalAmount").innerText = total.toFixed(2);
-        document.getElementById("totalInput").value = total.toFixed(2);
-    }
-
-
-    // Filtrar autos por cliente
-    document.getElementById("clientSelect").addEventListener("change", function() {
-
-        const clientId = this.value;
-        const carSelect = document.getElementById("carSelect");
-
-        for (let option of carSelect.options) {
-            if (!option.dataset.client) continue;
-
-            option.style.display = option.dataset.client === clientId ? "block" : "none";
-        }
-
-        carSelect.value = "";
+  if (!select.value || !quantity || Number.isNaN(price)) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Por favor, completa autoparte, cantidad y precio.'
     });
+    return;
+  }
+
+  const name = select.options[select.selectedIndex].dataset.name;
+  const image = select.options[select.selectedIndex].dataset.image || '';
+  const subtotal = quantity * price;
+
+  total += subtotal;
+  updateTotal();
+
+  const row = `
+        <tr>
+            <td>
+                ${name}
+                <input type="hidden" name="services[]" value="">
+                <input type="hidden" name="descriptions[]" value="">
+                <input type="hidden" name="quantities[]" value="">
+                <input type="hidden" name="prices[]" value="">
+                <input type="hidden" name="has_warranties[]" value="0">
+                <input type="hidden" name="warranty_times[]" value="">
+
+                <input type="hidden" name="part_ids[]" value="${select.value}">
+                <input type="hidden" name="part_descriptions[]" value="${name}">
+                <input type="hidden" name="part_quantities[]" value="${quantity}">
+                <input type="hidden" name="part_prices[]" value="${price}">
+                <input type="hidden" name="part_images[]" value="${image}">
+            </td>
+            <td>
+                ${image ? `<img src="${image}" alt="${name}" style="width:80px;height:60px;object-fit:cover;border:1px solid #ddd;border-radius:4px;">` : '<span class="text-muted">Sin imagen</span>'}
+            </td>
+            <td>${quantity}</td>
+            <td>S/ ${price.toFixed(2)}</td>
+            <td><span class="badge bg-secondary">No aplica</span></td>
+            <td>S/ ${subtotal.toFixed(2)}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this, ${subtotal})">X</button>
+            </td>
+        </tr>`;
+
+  document.querySelector("#servicesTable tbody").insertAdjacentHTML("beforeend", row);
+
+  select.value = "";
+  document.getElementById("partQuantity").value = 1;
+  document.getElementById("partPriceInput").value = "";
+}
 
 
-    function renderCarGallery(carId) {
+function removeRow(button, subtotal) {
+  button.closest("tr").remove();
+  total -= subtotal;
+  updateTotal();
+}
 
-        const container = document.getElementById("carGalleryContainer");
-        container.innerHTML = "";
+function updateTotal() {
+  document.getElementById("totalAmount").innerText = total.toFixed(2);
+  document.getElementById("totalInput").value = total.toFixed(2);
+}
 
-        const photos = carPhotos.filter(photo => photo.car_id == carId);
+function changeWarrantyTime(button, delta) {
+  const row = button.closest('tr');
+  const timeInput = row.querySelector('.warranty-time-input');
+  const label = row.querySelector('.warranty-time-label');
 
-        if (photos.length === 0) {
-            container.innerHTML = `
+  if (!timeInput || !label) {
+    return;
+  }
+
+  const current = parseInt(timeInput.value || '1');
+  const next = Math.max(1, current + delta);
+
+  timeInput.value = next;
+  label.textContent = `${next} meses`;
+}
+
+
+// Filtrar autos por cliente
+document.getElementById("clientSelect").addEventListener("change", function() {
+
+  const clientId = this.value;
+  const carSelect = document.getElementById("carSelect");
+
+  for (let option of carSelect.options) {
+    if (!option.dataset.client) continue;
+
+    option.style.display = option.dataset.client === clientId ? "block" : "none";
+  }
+
+  carSelect.value = "";
+});
+
+
+function renderCarGallery(carId) {
+
+  const container = document.getElementById("carGalleryContainer");
+  container.innerHTML = "";
+
+  const photos = carPhotos.filter(photo => photo.car_id == carId);
+
+  if (photos.length === 0) {
+    container.innerHTML = `
             <div class="alert alert-warning">
                 Este auto no tiene fotos registradas.
             </div>
         `;
-            return;
-        }
+    return;
+  }
 
-        let indicators = "";
-        let items = "";
+  let indicators = "";
+  let items = "";
 
-        photos.forEach((photo, index) => {
+  photos.forEach((photo, index) => {
 
-            indicators += `
+    indicators += `
             <button type="button" 
                 data-bs-target="#carCarousel" 
                 data-bs-slide-to="${index}" 
@@ -293,16 +476,16 @@
             </button>
         `;
 
-            items += `
+    items += `
             <div class="carousel-item ${index === 0 ? 'active' : ''}">
                 <img src="${photo.photo_path}" 
                      class="d-block w-100 rounded shadow"
                      style="height:400px; object-fit:cover;">
             </div>
         `;
-        });
+  });
 
-        container.innerHTML = `
+  container.innerHTML = `
         <div id="carCarousel" class="carousel slide" data-bs-ride="carousel">
 
             <div class="carousel-indicators">
@@ -329,34 +512,34 @@
 
         </div>
     `;
-    }
+}
 
-    document.getElementById("carSelect").addEventListener("change", function() {
-        renderCarGallery(this.value);
-    });
+document.getElementById("carSelect").addEventListener("change", function() {
+  renderCarGallery(this.value);
+});
 
-    document.getElementById("serviceSelect").addEventListener("change", function() {
+document.getElementById("serviceSelect").addEventListener("change", function() {
 
-        const selectedOption = this.options[this.selectedIndex];
+  const selectedOption = this.options[this.selectedIndex];
 
-        if (!this.value) {
-            document.getElementById("priceInput").value = "";
-            return;
-        }
+  if (!this.value) {
+    document.getElementById("priceInput").value = "";
+    return;
+  }
 
-        const basePrice = selectedOption.dataset.price;
-        document.getElementById("priceInput").value = parseFloat(basePrice).toFixed(2);
-    });
+  const basePrice = selectedOption.dataset.price;
+  document.getElementById("priceInput").value = parseFloat(basePrice).toFixed(2);
+});
 
-    document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function() {
 
-        const selectedCar = document.getElementById("carSelect").value;
+  const selectedCar = document.getElementById("carSelect").value;
 
-        if (selectedCar) {
-            renderCarGallery(selectedCar);
-        }
+  if (selectedCar) {
+    renderCarGallery(selectedCar);
+  }
 
-    });
+});
 </script>
 
 </html>

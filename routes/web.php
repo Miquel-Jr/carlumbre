@@ -44,6 +44,11 @@ $router->get('/quotes/approve', 'QuoteController@approve');
 $router->get('/quotes/reject', 'QuoteController@reject');
 $router->get('/quotes/pdf', 'QuoteController@generatePdf');
 
+$router->get('/work-orders', 'WorkOrderController@index');
+$router->get('/work-orders/show', 'WorkOrderController@show');
+$router->post('/work-orders/add-activity', 'WorkOrderController@addActivity');
+$router->post('/work-orders/update-activity-status', 'WorkOrderController@updateActivityStatus');
+
 $router->get('/notifications', 'NotificationController@index');
 $router->get('/notifications/resend', 'NotificationController@resend');
 $router->get('/notifications/delete', 'NotificationController@delete');

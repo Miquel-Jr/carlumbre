@@ -4,6 +4,18 @@ $router->get('/', 'AuthController@showLogin');
 $router->post('/login', 'AuthController@login');
 $router->get('/logout', 'AuthController@logout');
 
+$router->get('/profile', 'ProfileController@index');
+$router->post('/profile/update-password', 'ProfileController@updatePassword');
+
+$router->get('/users', 'UserController@index');
+$router->get('/users/create', 'UserController@create');
+$router->post('/users/store', 'UserController@store');
+$router->get('/users/edit', 'UserController@edit');
+$router->post('/users/update', 'UserController@update');
+$router->get('/users/delete', 'UserController@delete');
+$router->get('/users/roles', 'UserController@roles');
+$router->post('/users/roles/update', 'UserController@updateRolePermissions');
+
 $router->get('/dashboard', 'DashboardController@index');
 
 $router->get('/clients', 'ClientController@index');

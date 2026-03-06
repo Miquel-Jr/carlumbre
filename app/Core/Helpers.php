@@ -48,11 +48,53 @@ if (!function_exists('menu')) {
     }
 }
 
+if (!function_exists('firstAccessibleUrl')) {
+    function firstAccessibleUrl(?string $default = '/dashboard'): string
+    {
+        $menuItems = menu();
+        $firstItem = reset($menuItems);
+
+        if (is_array($firstItem) && !empty($firstItem['url'])) {
+            return (string) $firstItem['url'];
+        }
+
+        return $default ?? '/';
+    }
+}
+
 // Devuelve true si la ruta actual coincide con la URL del item
 if (!function_exists('isActive')) {
     function isActive(string $url): bool
     {
         $current = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         return $current === $url;
+    }
+}
+
+if (!function_exists('permissionLabels')) {
+    function permissionLabels(): array
+    {
+        $path = __DIR__ . '/../../config/permissions.php';
+
+        if (!file_exists($path)) {
+            return [];
+        }
+
+        $labels = require $path;
+        return is_array($labels) ? $labels : [];
+    }
+}
+
+if (!function_exists('permissionLabel')) {
+    function permissionLabel(string $permission): string
+    {
+        $labels = permissionLabels();
+
+        if (isset($labels[$permission])) {
+            return $labels[$permission];
+        }
+
+        $readable = str_replace('_', ' ', trim($permission));
+        return ucfirst($readable);
     }
 }

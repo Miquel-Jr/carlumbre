@@ -62,6 +62,17 @@ $menuItems = menu();
 .desktop-user-links {
   gap: 0.25rem;
 }
+
+.desktop-user-links .dropdown {
+  position: relative;
+}
+
+.desktop-user-links .dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  left: auto;
+}
 </style>
 
 <nav class="navbar navbar-dark bg-dark">
@@ -85,10 +96,14 @@ $menuItems = menu();
       </ul>
 
       <ul class="navbar-nav flex-row align-items-center ms-auto desktop-user-links">
-        <li class="nav-item">
-          <span class="nav-link text-light">
-            <?= $_SESSION['user']['name'] ?? 'Invitado' ?>
-          </span>
+        <li class="nav-item dropdown" id="desktopUserDropdown">
+          <a class="nav-link dropdown-toggle text-light" href="#" role="button" data-bs-toggle="dropdown"
+            aria-expanded="false" id="desktopUserDropdownToggle">
+            <?= $_SESSION['user']['name'] ?>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" id="desktopUserDropdownMenu">
+            <li><a class="dropdown-item" href="/profile">Ver mi perfil</a></li>
+          </ul>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="/logout">Cerrar sesión</a>
@@ -116,8 +131,9 @@ $menuItems = menu();
     <hr class="border-secondary">
 
     <div class="small text-light opacity-75 mb-2">
-      <?= $_SESSION['user']['name'] ?? 'Invitado' ?>
+      <?= $_SESSION['user']['name'] ?>
     </div>
+    <a class="mobile-menu-link" href="/profile">Ver mi perfil</a>
     <a class="mobile-menu-link" href="/logout">Cerrar sesión</a>
   </div>
 </aside>
@@ -158,5 +174,35 @@ $menuItems = menu();
   mobileMenu.querySelectorAll('a').forEach((link) => {
     link.addEventListener('click', closeMenu);
   });
+
+  const desktopUserDropdown = document.getElementById('desktopUserDropdown');
+  const desktopUserDropdownToggle = document.getElementById('desktopUserDropdownToggle');
+  const desktopUserDropdownMenu = document.getElementById('desktopUserDropdownMenu');
+
+  if (window.bootstrap && desktopUserDropdown && desktopUserDropdownToggle && desktopUserDropdownMenu) {
+    const desktopDropdown = bootstrap.Dropdown.getOrCreateInstance(desktopUserDropdownToggle);
+
+    document.addEventListener('click', (event) => {
+      const isOpen = desktopUserDropdownMenu.classList.contains('show');
+      if (!isOpen) {
+        return;
+      }
+
+      if (!desktopUserDropdown.contains(event.target)) {
+        desktopDropdown.hide();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') {
+        return;
+      }
+
+      const isOpen = desktopUserDropdownMenu.classList.contains('show');
+      if (isOpen) {
+        desktopDropdown.hide();
+      }
+    });
+  }
 })();
 </script>

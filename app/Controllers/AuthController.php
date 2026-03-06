@@ -43,7 +43,9 @@ class AuthController
             'role_id' => $user['role_id'],
             'permissions' => $permissions
         ];
-        return redirect('/dashboard');
+
+        $targetUrl = firstAccessibleUrl('/dashboard');
+        return redirect($targetUrl);
     }
 
     public function logout()

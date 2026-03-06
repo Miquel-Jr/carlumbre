@@ -77,7 +77,7 @@
 
         <!-- Tabla de notificaciones -->
         <div class="table-responsive">
-            <table class="table table-striped table-bordered">
+            <table class="table table-striped table-bordered table-mobile-cards">
                 <thead class="table-dark">
                     <tr>
                         <th>ID</th>
@@ -154,6 +154,7 @@
 </body>
 
     <?php view('partials/sweetalert'); ?>
+    <?php view('partials/mobile-table-cards'); ?>
     <script>
         function showMessage(message) {
             Swal.fire({

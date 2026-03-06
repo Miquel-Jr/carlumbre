@@ -13,17 +13,26 @@
 
   <div class="container mt-5">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>Presupuestos</h2>
+    <h1 class="mb-4">Presupuestos</h1>
+
+    <div class="d-flex justify-content-between mb-3">
+      <form method="GET" action="/quotes" class="d-flex">
+        <input type="text" name="search" class="form-control me-2" placeholder="Buscar presupuesto..."
+          data-debounce-search data-debounce-ms="500"
+          value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+        <button class="btn btn-primary">Buscar</button>
+        <button class="btn btn-secondary" type="button" onclick="window.location='/quotes'">Limpiar</button>
+      </form>
       <a href="/quotes/create" class="btn btn-success">
         + Nuevo Presupuesto
       </a>
     </div>
 
+
     <div class="card shadow">
       <div class="card-body">
 
-        <table class="table table-bordered table-striped align-middle">
+        <table class="table table-bordered table-striped align-middle table-mobile-cards">
           <thead class="table-dark">
             <tr>
               <th>#</th>
@@ -80,6 +89,12 @@
                 </a>
                 <?php endif; ?>
 
+                <?php if ($quote['status'] === 'approved' && empty($quote['work_order_id'])): ?>
+                <a class="btn btn-sm btn-outline-dark" onclick="createWorkOrder('<?= $quote['id'] ?>')">
+                  Crear OT
+                </a>
+                <?php endif; ?>
+
                 <?php if ($quote['status'] === 'pending'): ?>
 
                 <a href="/quotes/edit?id=<?= $quote['id'] ?>" class="btn btn-sm btn-warning">
@@ -124,6 +139,8 @@
 </body>
 
 <?php view('partials/sweetalert'); ?>
+<?php view('partials/mobile-table-cards'); ?>
+<?php view('partials/debounced-search'); ?>
 <script>
 function deleteQuote(id) {
   Swal.fire({
@@ -175,6 +192,24 @@ function rejectQuote(id) {
     }
   });
 }
+
+function createWorkOrder(id) {
+  Swal.fire({
+    title: '¿Crear orden de trabajo?',
+    text: 'Se generará una OT con las actividades del presupuesto aprobado.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#212529',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sí, crear OT',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = `/quotes/create-work-order?id=${id}`;
+    }
+  });
+}
+
 </script>
 
 </html>

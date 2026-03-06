@@ -30,9 +30,10 @@
 
     <div class="d-flex justify-content-between mb-3">
       <form method="GET" action="/services" class="d-flex">
-        <input type="text" name="search" class="form-control me-2" placeholder="Buscar servicio..."
-          value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+        <input type="text" name="search" class="form-control me-2" placeholder="Buscar servicio..." data-debounce-search
+          data-debounce-ms="500" value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
         <button class="btn btn-primary">Buscar</button>
+        <button class="btn btn-secondary" type="button" onclick="window.location='/services'">Limpiar</button>
       </form>
 
       <a href="/services/create" class="btn btn-success">
@@ -40,7 +41,7 @@
       </a>
     </div>
 
-    <table class="table table-striped table-bordered">
+    <table class="table table-striped table-bordered table-mobile-cards">
       <thead class="table-dark">
         <tr>
           <th>ID</th>
@@ -175,6 +176,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <?php view('partials/sweetalert'); ?>
+<?php view('partials/mobile-table-cards'); ?>
+<?php view('partials/debounced-search'); ?>
 <script>
 function deleteService(id) {
   const url = `/services/delete?id=${id}`;

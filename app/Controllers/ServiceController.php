@@ -28,9 +28,9 @@ class ServiceController
     {
         (new AuthMiddleware())->handle();
         (new PermissionMiddleware('view_services'))->handle();
-
-        $services = $this->serviceModel->all();
-        $clients = $this->clientModel->all();
+        $search = trim($_GET['search'] ?? '');
+        $services = $this->serviceModel->all($search !== '' ? $search : null);
+        $clients = $this->clientModel->all($search !== '' ? $search : null);
 
         return view(self::VIEW_SERVICES, [
             'menu' => menu(),

@@ -41,13 +41,22 @@ $router->get('/quotes/edit', 'QuoteController@edit');
 $router->post('/quotes/update', 'QuoteController@update');
 $router->get('/quotes/delete', 'QuoteController@delete');
 $router->get('/quotes/approve', 'QuoteController@approve');
+$router->get('/quotes/create-work-order', 'QuoteController@createWorkOrder');
 $router->get('/quotes/reject', 'QuoteController@reject');
 $router->get('/quotes/pdf', 'QuoteController@generatePdf');
 
 $router->get('/work-orders', 'WorkOrderController@index');
 $router->get('/work-orders/show', 'WorkOrderController@show');
+$router->get('/work-orders/delete', 'WorkOrderController@delete');
 $router->post('/work-orders/add-activity', 'WorkOrderController@addActivity');
 $router->post('/work-orders/update-activity-status', 'WorkOrderController@updateActivityStatus');
+
+$router->get('/billing', 'BillingController@index');
+$router->get('/billing/show', 'BillingController@show');
+$router->post('/billing/generate', 'BillingController@generate');
+$router->post('/billing/update-invoice-number', 'BillingController@updateInvoiceNumber');
+$router->post('/billing/update-status', 'BillingController@updateStatus');
+$router->get('/billing/delete', 'BillingController@delete');
 
 $router->get('/notifications', 'NotificationController@index');
 $router->get('/notifications/resend', 'NotificationController@resend');

@@ -24,16 +24,20 @@
     <form method="GET" action="/clients" class="mb-3 row g-2">
       <div class="col-md-6">
         <input type="text" name="search" class="form-control" placeholder="Buscar por nombre, email o teléfono"
+          data-debounce-search data-debounce-ms="500"
           value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
       </div>
       <div class="col-md-2">
         <button class="btn btn-primary w-100">Buscar</button>
       </div>
+      <div class="col-md-2">
+        <button class="btn btn-secondary w-100" type="button" onclick="window.location='/clients'">Limpiar</button>
+      </div>
     </form>
 
     <a href="/clients/create" class="btn btn-success mb-3">Agregar Cliente</a>
 
-    <table class="table table-striped table-bordered">
+    <table class="table table-striped table-bordered table-mobile-cards">
       <thead class="table-dark">
         <tr>
           <th>ID</th>
@@ -89,6 +93,8 @@
   </div>
 
   <?php view('partials/sweetalert'); ?>
+  <?php view('partials/mobile-table-cards'); ?>
+  <?php view('partials/debounced-search'); ?>
   <script>
   function deleteClient(id) {
     var url = '/clients/delete?id=' + encodeURIComponent(id);
@@ -109,23 +115,6 @@
     });
   }
 
-  (function() {
-    var searchForm = document.querySelector('form[action="/clients"]');
-    var searchInput = searchForm ? searchForm.querySelector('input[name="search"]') : null;
-
-    if (!searchForm || !searchInput) {
-      return;
-    }
-
-    var debounceTimer;
-
-    searchInput.addEventListener('input', function() {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(function() {
-        searchForm.submit();
-      }, 300);
-    });
-  })();
   </script>
 
 </body>

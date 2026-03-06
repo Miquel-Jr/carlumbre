@@ -14,6 +14,7 @@ use App\Models\Product;
 use App\Models\WorkOrder;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Throwable;
 
 class QuoteController
 {
@@ -42,7 +43,8 @@ class QuoteController
     {
         (new AuthMiddleware())->handle();
         (new PermissionMiddleware('view_quotes'))->handle();
-        $quotes = $this->quoteModel->all();
+        $search = trim($_GET['search'] ?? '');
+        $quotes = $this->quoteModel->all($search !== '' ? $search : null);
         return view('quotes/index', ['quotes' => $quotes]);
     }
 
@@ -307,7 +309,13 @@ class QuoteController
 
         $this->quoteModel->updateStatus($quoteId, 'approved');
 
-        $workOrderResult = $this->workOrderModel->createFromQuote((int) $quoteId);
+        try {
+            $workOrderResult = $this->workOrderModel->createFromQuote((int) $quoteId);
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $_SESSION['error'] = 'Presupuesto aprobado, pero no se pudo generar la OT por un bloqueo temporal. Intenta nuevamente.';
+            return redirect(self::QUOTES_ROUTE);
+        }
 
         if (!empty($workOrderResult['work_order_id'])) {
             if (!empty($workOrderResult['created'])) {
@@ -317,6 +325,44 @@ class QuoteController
             }
         } else {
             $_SESSION['success'] = 'Presupuesto aprobado exitosamente.';
+        }
+
+        return redirect(self::QUOTES_ROUTE);
+    }
+
+    public function createWorkOrder()
+    {
+        (new AuthMiddleware())->handle();
+        (new PermissionMiddleware('view_quotes'))->handle();
+
+        $quoteId = $_GET['id'] ?? null;
+        if (!$quoteId) {
+            $_SESSION['error'] = self::QUOTE_ID_ERROR;
+            return redirect(self::QUOTES_ROUTE);
+        }
+
+        $quote = $this->quoteModel->find($quoteId);
+        if (!$quote) {
+            $_SESSION['error'] = 'Presupuesto no encontrado.';
+            return redirect(self::QUOTES_ROUTE);
+        }
+
+        try {
+            $workOrderResult = $this->workOrderModel->createFromQuote((int) $quoteId);
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $_SESSION['error'] = 'No se pudo generar la OT por un bloqueo temporal. Intenta nuevamente.';
+            return redirect(self::QUOTES_ROUTE);
+        }
+
+        if (!empty($workOrderResult['work_order_id'])) {
+            if (!empty($workOrderResult['created'])) {
+                $_SESSION['success'] = 'OT #' . $workOrderResult['work_order_id'] . ' generada correctamente.';
+            } else {
+                $_SESSION['success'] = 'La OT #' . $workOrderResult['work_order_id'] . ' ya existía para este presupuesto.';
+            }
+        } else {
+            $_SESSION['error'] = 'No se pudo generar la OT para este presupuesto.';
         }
 
         return redirect(self::QUOTES_ROUTE);

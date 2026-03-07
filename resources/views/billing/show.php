@@ -100,6 +100,50 @@
       </div>
     </div>
 
+    <div class="card shadow-sm mt-4">
+      <div class="card-header bg-dark text-white">Vigencia de garantía</div>
+      <div class="card-body">
+        <?php if (!empty($warranties)): ?>
+        <table class="table table-bordered table-striped align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Servicio</th>
+              <th>Tiempo de garantía</th>
+              <th>Inicio</th>
+              <th>Vence</th>
+              <th>¿Cubre garantía?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($warranties as $warranty): ?>
+            <tr>
+              <td><?= htmlspecialchars($warranty['service_description'] ?? '-') ?></td>
+              <td><?= (int) ($warranty['warranty_months'] ?? 0) ?> meses</td>
+              <td>
+                <?= !empty($warranty['starts_at']) ? date('d/m/Y', strtotime($warranty['starts_at'])) : '-' ?>
+              </td>
+              <td>
+                <?= !empty($warranty['expires_at']) ? date('d/m/Y', strtotime($warranty['expires_at'])) : '-' ?>
+              </td>
+              <td>
+                <?php if (($warranty['status'] ?? 'active') === 'active'): ?>
+                <span class="badge bg-success">Sí, vigente</span>
+                <?php else: ?>
+                <span class="badge bg-danger">No, vencida</span>
+                <?php endif; ?>
+              </td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+        <?php else: ?>
+        <div class="alert alert-secondary mb-0">
+          Esta factura no tiene servicios con garantía registrada.
+        </div>
+        <?php endif; ?>
+      </div>
+    </div>
+
     <div class="text-end mt-3">
       <h4 class="mb-0">TOTAL: S/ <?= number_format((float) $invoice['total'], 2) ?></h4>
     </div>

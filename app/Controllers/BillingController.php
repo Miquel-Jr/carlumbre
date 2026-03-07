@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use App\Models\Invoice;
+use App\Models\WarrantyValidity;
 use App\Models\WorkOrder;
 
 class BillingController
@@ -14,11 +15,13 @@ class BillingController
 
     protected $invoiceModel;
     protected $workOrderModel;
+    protected $warrantyValidityModel;
 
     public function __construct()
     {
         $this->invoiceModel = new Invoice();
         $this->workOrderModel = new WorkOrder();
+        $this->warrantyValidityModel = new WarrantyValidity();
     }
 
     public function index()
@@ -50,10 +53,12 @@ class BillingController
         }
 
         $items = $this->invoiceModel->getItems($id);
+        $warranties = $this->warrantyValidityModel->listByInvoiceId((int) $id);
 
         return view('billing/show', [
             'invoice' => $invoice,
             'items' => $items,
+            'warranties' => $warranties,
         ]);
     }
 
@@ -118,6 +123,7 @@ class BillingController
 
         $id = $_POST['id'] ?? null;
         $invoiceNumber = $_POST['invoice_number'] ?? '';
+        $invoiceNumber = trim($invoiceNumber);
 
         if (!$id) {
             $_SESSION['error'] = 'ID de factura no proporcionado.';
@@ -128,6 +134,15 @@ class BillingController
         if (!$invoice) {
             $_SESSION['error'] = 'Factura no encontrada.';
             return redirect(self::BILLING_ROUTE);
+        }
+
+        if ($invoiceNumber !== '') {
+            $existingInvoice = $this->invoiceModel->findByInvoiceNumber($invoiceNumber);
+
+            if ($existingInvoice && (int) ($existingInvoice['id'] ?? 0) !== (int) $id) {
+                $_SESSION['error'] = 'El número de factura ya existe en la factura #' . (int) $existingInvoice['id'] . '.';
+                return redirect(self::BILLING_ROUTE . '/show?id=' . (int) $id);
+            }
         }
 
         try {
@@ -178,6 +193,11 @@ class BillingController
 
         try {
             $this->invoiceModel->updateStatus((int) $id, $status);
+
+            $newWarranties = 0;
+            if ($status === 'paid') {
+                $newWarranties = $this->warrantyValidityModel->registerFromPaidInvoice((int) $id);
+            }
             
             $statusLabels = [
                 'issued' => 'Emitida',
@@ -186,6 +206,14 @@ class BillingController
             ];
             
             $_SESSION['success'] = 'Estado actualizado a: ' . $statusLabels[$status];
+
+            if ($status === 'paid') {
+                if ($newWarranties > 0) {
+                    $_SESSION['success'] .= '. Se registraron ' . $newWarranties . ' garantía(s) vigente(s).';
+                } else {
+                    $_SESSION['success'] .= '. No se encontraron servicios con garantía para registrar.';
+                }
+            }
         } catch (\Exception $e) {
             $_SESSION['error'] = 'Error al actualizar el estado: ' . $e->getMessage();
         }

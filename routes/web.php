@@ -70,6 +70,9 @@ $router->post('/billing/update-invoice-number', 'BillingController@updateInvoice
 $router->post('/billing/update-status', 'BillingController@updateStatus');
 $router->get('/billing/delete', 'BillingController@delete');
 
+$router->get('/warranties', 'WarrantyController@index');
+
 $router->get('/notifications', 'NotificationController@index');
+$router->post('/notifications/update-message', 'NotificationController@updateMessage');
 $router->get('/notifications/resend', 'NotificationController@resend');
 $router->get('/notifications/delete', 'NotificationController@delete');

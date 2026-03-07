@@ -218,6 +218,18 @@ class Invoice
     ]);
   }
 
+  public function findByInvoiceNumber(string $invoiceNumber)
+  {
+    $db = Database::connect();
+
+    $stmt = $db->prepare("SELECT * FROM {$this->table} WHERE invoice_number = :invoice_number LIMIT 1");
+    $stmt->execute([
+      'invoice_number' => trim($invoiceNumber),
+    ]);
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+  }
+
   public function updateStatus($id, $status)
   {
     $db = Database::connect();

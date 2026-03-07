@@ -21,6 +21,8 @@
         <button class="btn btn-primary">Buscar</button>
         <button class="btn btn-secondary" type="button" onclick="window.location='/billing'">Limpiar</button>
       </form>
+
+      <a href="/warranties" class="btn btn-outline-primary">Vigencia de garantías</a>
     </div>
 
     <div class="card shadow">

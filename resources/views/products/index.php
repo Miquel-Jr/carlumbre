@@ -63,23 +63,26 @@
   <div class="container mt-5 mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="mb-0">Autopartes</h1>
-      <form method="GET" action="/products" class="d-flex gap-2">
-        <select name="category" class="form-select" style="min-width: 180px;">
-          <option value="">Todas las categorías</option>
-          <?php foreach (($categories ?? []) as $categoryOption): ?>
-          <option value="<?= htmlspecialchars($categoryOption) ?>"
-            <?= ($selectedCategory ?? '') === $categoryOption ? 'selected' : '' ?>>
-            <?= htmlspecialchars($categoryOption) ?>
-          </option>
-          <?php endforeach; ?>
-        </select>
-        <input type="text" name="search" class="form-control" placeholder="Buscar autoparte..."
-          data-debounce-search data-debounce-ms="500"
-          value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
-        <button class="btn btn-primary">Buscar</button>
-        <button class="btn btn-secondary" type="button" onclick="window.location='/products'">Limpiar</button>
-      </form>
+      <div class="d-flex gap-2">
+        <a href="/products/create" class="btn btn-success">Nuevo producto</a>
+      </div>
     </div>
+
+    <form method="GET" action="/products" class="d-flex gap-2 mb-4">
+      <select name="category" class="form-select" style="min-width: 180px;">
+        <option value="">Todas las categorías</option>
+        <?php foreach (($categories ?? []) as $categoryOption): ?>
+        <option value="<?= htmlspecialchars($categoryOption) ?>"
+          <?= ($selectedCategory ?? '') === $categoryOption ? 'selected' : '' ?>>
+          <?= htmlspecialchars($categoryOption) ?>
+        </option>
+        <?php endforeach; ?>
+      </select>
+      <input type="text" name="search" class="form-control" placeholder="Buscar autoparte..." data-debounce-search
+        data-debounce-ms="500" value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+      <button class="btn btn-primary">Buscar</button>
+      <button class="btn btn-secondary" type="button" onclick="window.location='/products'">Limpiar</button>
+    </form>
 
     <div class="row g-4">
       <?php if (!empty($parts)): ?>
@@ -89,13 +92,22 @@
           <div class="card-body d-flex flex-column gap-3">
             <h5 class="card-title mb-0"><?= htmlspecialchars($part['name']) ?></h5>
             <p class="card-text text-muted mb-0"><?= htmlspecialchars($part['description']) ?></p>
+            <div class="d-flex gap-2">
+              <a href="/products/edit?id=<?= (int) $part['id'] ?>" class="btn btn-outline-primary btn-sm">Editar</a>
+              <a href="/products/delete?id=<?= (int) $part['id'] ?>" class="btn btn-outline-danger btn-sm js-delete-product"
+                data-product-name="<?= htmlspecialchars($part['name']) ?>">Eliminar</a>
+            </div>
 
             <div>
               <h6 class="mb-2">Vista 2D</h6>
+              <?php if (!empty($part['image_2d'])): ?>
               <img src="<?= htmlspecialchars($part['image_2d']) ?>"
                 alt="Imagen 2D de <?= htmlspecialchars($part['name']) ?>" class="part-image-2d preview-trigger"
                 data-preview-type="2d" data-preview-src="<?= htmlspecialchars($part['image_2d']) ?>"
                 data-preview-title="<?= htmlspecialchars($part['name']) ?> - Vista 2D">
+              <?php else: ?>
+              <div class="alert alert-light border mb-0">Imagen 2D no disponible.</div>
+              <?php endif; ?>
             </div>
 
             <div>
@@ -139,6 +151,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <?php view('partials/debounced-search'); ?>
+  <?php view('partials/sweetalert'); ?>
   <script>
   const previewModalElement = document.getElementById('previewModal');
   const previewModalTitle = document.getElementById('previewModalTitle');
@@ -191,6 +204,36 @@
         searchForm.submit();
       });
     }
+  })();
+
+  (function() {
+    document.querySelectorAll('.js-delete-product').forEach((link) => {
+      link.addEventListener('click', function(event) {
+        event.preventDefault();
+
+        const deleteUrl = this.getAttribute('href');
+        const productName = this.getAttribute('data-product-name') || 'este producto';
+
+        if (typeof Swal === 'undefined') {
+          window.location.href = deleteUrl;
+          return;
+        }
+
+        Swal.fire({
+          title: '¿Eliminar producto?',
+          html: `Se eliminará <strong>${productName}</strong>. Esta acción no se puede deshacer.`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#dc3545'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = deleteUrl;
+          }
+        });
+      });
+    });
   })();
   </script>
 </body>

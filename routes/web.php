@@ -21,6 +21,12 @@ $router->get('/dashboard', 'DashboardController@index');
 $router->get('/clients', 'ClientController@index');
 
 $router->get('/products', 'ProductController@index');
+$router->get('/products/create', 'ProductController@create');
+$router->post('/products/store', 'ProductController@store');
+$router->get('/products/edit', 'ProductController@edit');
+$router->post('/products/update', 'ProductController@update');
+$router->get('/products/delete', 'ProductController@delete');
+$router->post('/products/update-image', 'ProductController@updateImage');
 
 $router->get('/clients/create', 'ClientController@create');
 $router->post('/clients/store', 'ClientController@store');

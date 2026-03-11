@@ -9,11 +9,76 @@
     font-family: DejaVu Sans, sans-serif;
     font-size: 12px;
     color: #333;
+    margin: 0px;
+    background: #f7f7f7;
+  }
+
+  .bg-shape {
+    position: fixed;
+    width: 0;
+    height: 0;
+    z-index: -2;
+  }
+
+  .bg-top-right-black {
+    top: 0;
+    right: 0;
+    border-top: 92px solid #121820;
+    border-left: 130px solid transparent;
+  }
+
+  .bg-top-right-red-main {
+    top: 0;
+    right: 0;
+    border-top: 128px solid #ef5a57;
+    border-left: 180px solid transparent;
+  }
+
+  .bg-top-right-red-strong {
+    top: 0;
+    right: 0;
+    border-top: 58px solid #cf0f22;
+    border-left: 70px solid transparent;
+  }
+
+  .bg-top-right-dark-overlay {
+    top: 78px;
+    right: 0;
+    border-top: 88px solid rgba(18, 24, 32, 0.7);
+    border-left: 74px solid transparent;
+  }
+
+  .bg-bottom-left-black {
+    bottom: 0;
+    left: 0;
+    border-bottom: 108px solid #121820;
+    border-right: 138px solid transparent;
+  }
+
+  .bg-bottom-left-red-main {
+    bottom: 0;
+    left: 0;
+    border-bottom: 146px solid #ef5a57;
+    border-right: 176px solid transparent;
+  }
+
+  .bg-bottom-left-red-strong {
+    bottom: 0;
+    left: 0;
+    border-bottom: 62px solid #cf0f22;
+    border-right: 78px solid transparent;
+  }
+
+  .bg-bottom-left-dark-overlay {
+    bottom: 44px;
+    left: 0;
+    border-bottom: 80px solid rgba(18, 24, 32, 0.72);
+    border-right: 64px solid transparent;
   }
 
   .header {
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
   }
 
   .header-table {
@@ -33,7 +98,56 @@
   }
 
   .logo {
-    width: 140px;
+    width: 200px;
+  }
+
+  .brand-lockup {
+    width: 100%;
+  }
+
+  .brand-table {
+    width: auto;
+    border-collapse: collapse;
+    margin: 0;
+  }
+
+  .brand-table td {
+    border: none;
+    padding: 0;
+    vertical-align: middle;
+  }
+
+  .brand-logo-cell {
+    width: 200px;
+    padding-right: 10px;
+  }
+
+  .brand-text-cell {
+    text-align: left;
+    color: #44484d;
+  }
+
+  .brand-line-1 {
+    font-size: 35px;
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: 1px;
+  }
+
+  .brand-line-2 {
+    font-size: 18px;
+    font-weight: 800;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .brand-slogan {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #44484d;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
   }
 
   .company-info {
@@ -135,16 +249,27 @@
 
   .watermark {
     position: fixed;
-    top: 35%;
-    left: 20%;
-    width: 400px;
-    opacity: 0.05;
+    top: 15%;
+    left: 0%;
+    width: 700px;
+    opacity: 0.09;
     z-index: -1;
   }
   </style>
 </head>
 
 <body>
+
+  <!-- Fondo decorativo -->
+  <div class="bg-shape bg-top-right-red-main"></div>
+  <div class="bg-shape bg-top-right-red-strong"></div>
+  <div class="bg-shape bg-top-right-black"></div>
+  <div class="bg-shape bg-top-right-dark-overlay"></div>
+
+  <div class="bg-shape bg-bottom-left-red-main"></div>
+  <div class="bg-shape bg-bottom-left-red-strong"></div>
+  <div class="bg-shape bg-bottom-left-black"></div>
+  <div class="bg-shape bg-bottom-left-dark-overlay"></div>
 
   <!-- Marca de agua -->
   <img src="<?= $logoBase64 ?>" alt="Carlumbre Watermark" class="watermark">
@@ -154,13 +279,21 @@
     <table class="header-table">
       <tr>
         <td class="header-logo">
-          <img src="<?= $logoBase64 ?>" alt="Carlumbre Logo" class="logo">
-        </td>
-        <td class="company-info">
-          <strong>MECANICA AUTOMOTRIZ CARLUMBRE</strong><br>
-          Dirección: Av. lorenzo de encalada 384, Rimac - Lima<br>
-          Tel: 979 701 851<br>
-          Email: lumbrecar@gmail.com<br>
+          <div class="brand-lockup">
+            <table class="brand-table">
+              <tr>
+                <td class="brand-logo-cell">
+                  <img src="<?= $carPng ?>" alt="Carlumbre Logo" class="logo">
+                </td>
+                <td class="brand-text-cell">
+                  <div class="brand-line-1">LUMBRE</div>
+                  <div class="brand-line-2">MECANICA AUTOMOTRIZ</div>
+                  <div class="brand-line-2">Av. lorenzo de encalada 384, Rimac - Lima</div>
+                </td>
+              </tr>
+            </table>
+            <div class="brand-slogan">!IMPULSANDO TU CONFIANZA EN CADA REPARACION !</div>
+          </div>
         </td>
       </tr>
     </table>

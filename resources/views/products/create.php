@@ -41,8 +41,8 @@
 
           <div class="col-12">
             <label class="form-label" for="image_2d">Imagen 2D (Cloudinary) *</label>
-            <input type="file" name="image_2d" id="image_2d" class="form-control" accept="image/png,image/jpeg,image/webp" required>
-            <small class="text-muted">Formatos permitidos: JPG, PNG o WEBP. Máximo 5MB.</small>
+            <input type="file" name="image_2d" id="image_2d" class="form-control" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" required>
+            <small class="text-muted">Formatos permitidos: JPG, PNG, GIF o WEBP. Máximo 5MB.</small>
           </div>
 
           <div class="col-12 text-end">

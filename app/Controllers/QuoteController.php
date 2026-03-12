@@ -412,7 +412,7 @@ class QuoteController
 
         $items = $this->quoteItemsModel->getByQuoteId($id);
         $logoBase64 = $this->imageToBase64(__DIR__ . '/../../public/assets/carlumbre/Icon.jpeg');
-        $carPng = $this->imageToBase64(__DIR__ . '/../../public/assets/carlumbre/Car.png');
+        $carPng = $this->imageToBase64(__DIR__ . '/../../public/assets/carlumbre/CarLumbre.png');
         $facebookIcon = $this->imageToBase64(__DIR__ . '/../../public/assets/carlumbre/facebook.png');
         $instagramIcon = $this->imageToBase64(__DIR__ . '/../../public/assets/carlumbre/instagram.png');
         $whatsappIcon = $this->imageToBase64(__DIR__ . '/../../public/assets/carlumbre/whatsapp.png');

@@ -9,6 +9,7 @@ use Throwable;
 class CloudinaryStorage
 {
     private bool $enabled = false;
+    private string $localUploadDir = '';
 
     public function __construct()
     {
@@ -34,6 +35,8 @@ class CloudinaryStorage
         ]);
 
         $this->enabled = true;
+        
+        $this->localUploadDir = dirname(__DIR__, 2) . '/public/uploads';
     }
 
     public function isEnabled(): bool
@@ -43,10 +46,18 @@ class CloudinaryStorage
 
     public function uploadImage(string $tmpFilePath, string $folder): ?string
     {
-        if (!$this->enabled) {
-            return null;
+        if ($this->enabled) {
+            $cloudinaryUrl = $this->uploadToCloudinary($tmpFilePath, $folder);
+            if ($cloudinaryUrl !== null) {
+                return $cloudinaryUrl;
+            }
         }
 
+        return $this->saveToLocalUploads($tmpFilePath, $folder);
+    }
+
+    private function uploadToCloudinary(string $tmpFilePath, string $folder): ?string
+    {
         try {
             $result = (new UploadApi())->upload($tmpFilePath, [
                 'folder' => trim($folder, '/'),
@@ -59,10 +70,73 @@ class CloudinaryStorage
         }
     }
 
+    private function saveToLocalUploads(string $tmpFilePath, string $folder): ?string
+    {
+        if (!is_file($tmpFilePath)) {
+            return null;
+        }
+
+        $uploadDir = $this->localUploadDir;
+        if ($folder !== '') {
+            $uploadDir .= '/' . trim((string) $folder, '/');
+        }
+
+        if (!is_dir($uploadDir)) {
+            if (@mkdir($uploadDir, 0755, true) === false) {
+                return null;
+            }
+        }
+
+        $extension = $this->getExtensionFromMimeType($tmpFilePath);
+        if ($extension === null) {
+            return null;
+        }
+
+        $filename = uniqid('img_', true) . '.' . $extension;
+        $targetPath = $uploadDir . '/' . $filename;
+
+        if (@copy($tmpFilePath, $targetPath) === false) {
+            return null;
+        }
+
+        $folderPath = $folder !== '' ? trim((string) $folder, '/') . '/' : '';
+        return '/uploads/' . $folderPath . $filename;
+    }
+
+    private function getExtensionFromMimeType(string $filePath): ?string
+    {
+        $mimeType = mime_content_type($filePath);
+        
+        $mimeToExt = [
+            'image/jpeg' => 'jpg',
+            'image/jpg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            'image/x-windows-bmp' => 'bmp',
+            'image/bmp' => 'bmp',
+            'image/tiff' => 'tiff',
+            'image/x-tiff' => 'tiff',
+            'image/svg+xml' => 'svg',
+        ];
+
+        if (isset($mimeToExt[$mimeType])) {
+            return $mimeToExt[$mimeType];
+        }
+
+        if (strpos($mimeType, 'image/') === 0) {
+            $ext = str_replace('image/', '', $mimeType);
+            $ext = str_replace('x-', '', $ext);
+            return $ext;
+        }
+
+        return null;
+    }
+
     public function deleteByUrl(string $url): bool
     {
         if (!$this->enabled) {
-            return false;
+            return $this->deleteLocalUpload($url);
         }
 
         $publicId = $this->extractPublicIdFromUrl($url);
@@ -80,6 +154,24 @@ class CloudinaryStorage
         } catch (Throwable $e) {
             return false;
         }
+    }
+
+    private function deleteLocalUpload(string $url): bool
+    {
+        if (strpos($url, '/uploads/') === false) {
+            return false;
+        }
+
+        $relativePath = parse_url($url, PHP_URL_PATH);
+        if ($relativePath === null) {
+            return false;
+        }
+
+        $filePath = dirname(__DIR__, 2) . '/public' . $relativePath;
+        if (is_file($filePath) && @unlink($filePath) === true) {
+            return true;
+        }
+        return false;
     }
 
     private function extractPublicIdFromUrl(string $url): ?string

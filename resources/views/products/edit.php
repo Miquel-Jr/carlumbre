@@ -52,7 +52,7 @@
 
           <div class="col-12">
             <label class="form-label" for="image_2d">Nueva imagen 2D (Cloudinary)</label>
-            <input type="file" name="image_2d" id="image_2d" class="form-control" accept="image/png,image/jpeg,image/webp">
+            <input type="file" name="image_2d" id="image_2d" class="form-control" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif">
             <small class="text-muted">Opcional. Si subes una nueva, reemplazará la imagen actual.</small>
           </div>
 

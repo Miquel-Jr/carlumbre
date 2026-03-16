@@ -86,8 +86,8 @@ class UserController
             return redirect(self::ROUTE_CREATE);
         }
 
-        if (strlen($password) < 8) {
-            $_SESSION['error'] = 'La contraseña debe tener al menos 8 caracteres.';
+        if (strlen($password) < 6) {
+            $_SESSION['error'] = 'La contraseña debe tener al menos 6 caracteres.';
             return redirect(self::ROUTE_CREATE);
         }
 

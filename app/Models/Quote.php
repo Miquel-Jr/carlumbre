@@ -16,22 +16,26 @@ class Quote
         if ($search) {
             $stmt = $db->prepare("SELECT 
                 q.*,
+                wo.id AS work_order_id,
                 c.name AS client_name,
                 CONCAT(car.brand, ' ', car.model, ' - ', car.plate) AS car_info
             FROM quotes q
             JOIN clients c ON c.id = q.client_id
             JOIN cars car ON car.id = q.car_id
+            LEFT JOIN work_orders wo ON wo.quote_id = q.id
             WHERE c.name LIKE :search
             ORDER BY q.created_at DESC");
             $stmt->execute(['search' => "%{$search}%"]);
         } else {
             $stmt = $db->query("SELECT 
                 q.*,
+                wo.id AS work_order_id,
                 c.name AS client_name,
                 CONCAT(car.brand, ' ', car.model, ' - ', car.plate) AS car_info
             FROM quotes q
             JOIN clients c ON c.id = q.client_id
             JOIN cars car ON car.id = q.car_id
+            LEFT JOIN work_orders wo ON wo.quote_id = q.id
             ORDER BY q.created_at DESC");
         }
 
@@ -68,14 +72,14 @@ class Quote
     {
         $db = Database::connect();
 
-        $stmt = $db->prepare("UPDATE {$this->table} SET client_id = :client_id, car_id = :car_id, service_id = :service_id, total_price = :total_price, status = :status WHERE id = :id");
+        $stmt = $db->prepare("UPDATE {$this->table} SET client_id = :client_id, car_id = :car_id, total = :total, status = :status, notes = :notes WHERE id = :id");
         return $stmt->execute([
             'id' => $id,
             'client_id' => $data['client_id'],
             'car_id' => $data['car_id'],
-            'service_id' => $data['service_id'],
-            'total_price' => $data['total_price'],
-            'status' => $data['status']
+            'total' => $data['total'],
+            'status' => $data['status'],
+            'notes' => $data['notes']
         ]);
     }
 
@@ -104,16 +108,20 @@ class Quote
 
         // Obtener presupuesto
         $stmt = $db->prepare("
-        SELECT q.*, 
-               c.name as client_name,
-               c.email,
-               car.brand,
-               car.model,
-               car.plate
-        FROM quotes q
-        JOIN clients c ON c.id = q.client_id
-        JOIN cars car ON car.id = q.car_id
-        WHERE q.id = ?");
+            SELECT q.*, 
+                c.name as client_name,
+                c.email,
+                c.phone,
+                c.address,
+                c.document_type,
+                c.document_number,
+                car.brand,
+                car.model,
+                car.plate
+            FROM quotes q
+            JOIN clients c ON c.id = q.client_id
+            JOIN cars car ON car.id = q.car_id
+            WHERE q.id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }

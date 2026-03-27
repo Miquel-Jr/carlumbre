@@ -13,7 +13,7 @@ class Client
         $db = Database::connect();
 
         if ($search) {
-            $stmt = $db->prepare("SELECT * FROM {$this->table} WHERE name LIKE :search OR email LIKE :search ORDER BY created_at DESC");
+            $stmt = $db->prepare("SELECT * FROM {$this->table} WHERE name LIKE :search OR email LIKE :search OR phone LIKE :search ORDER BY created_at DESC");
             $stmt->execute(['search' => "%{$search}%"]);
         } else {
             $stmt = $db->query("SELECT * FROM {$this->table} ORDER BY created_at DESC");

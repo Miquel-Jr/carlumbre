@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\CloudinaryStorage;
 use App\Core\Database;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\PermissionMiddleware;
@@ -10,13 +11,18 @@ use App\Models\Client;
 
 class CarController
 {
+    protected const ERROR_PAGE = 'errors/nopage';
+    protected const CARS_LISTING_URL = '/clients/cars?id=';
+    protected const CARS_PATH = '/cars/';
     protected $clientModel;
     protected $carModel;
+    protected $cloudinaryStorage;
 
     public function __construct()
     {
         $this->clientModel = new Client();
         $this->carModel = new Car();
+        $this->cloudinaryStorage = new CloudinaryStorage();
     }
 
     public function index()
@@ -27,7 +33,7 @@ class CarController
         $id = $_GET['id'] ?? null;
         $client = $this->clientModel->find($id);
         if (!$client) {
-            return view('errors/nopage');
+            return view(self::ERROR_PAGE);
         }
 
         $cars = $this->carModel->getByClientId($id);
@@ -52,7 +58,7 @@ class CarController
         $clientId = $_GET['client_id'] ?? null;
         $client = $this->clientModel->find($clientId);
         if (!$client) {
-            return view('errors/nopage');
+            return view(self::ERROR_PAGE);
         }
 
         return view('clients/cars/create', [
@@ -76,7 +82,7 @@ class CarController
 
         if (!$client_id || !$brand || !$model) {
             $_SESSION['error'] = 'Marca y modelo son obligatorios.';
-            return redirect('/clients/cars?id=' . $client_id);
+            return redirect(self::CARS_LISTING_URL . $client_id);
         }
 
         $stmt = $pdo->prepare('
@@ -95,11 +101,7 @@ class CarController
 
         $car_id = $pdo->lastInsertId();
 
-        $baseDir = __DIR__ . '/../../public/uploads/clients/' . $client_id . '/cars/' . $car_id . '/';
-
-        if (!is_dir($baseDir)) {
-            mkdir($baseDir, 0777, true);
-        }
+        $cloudinaryFolder = 'carlumbre/clients/' . $client_id . self::CARS_PATH . $car_id;
 
         if (!empty($_FILES['photos']['name'][0])) {
             $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
@@ -113,16 +115,18 @@ class CarController
                         continue;  // Ignorar archivos no válidos
                     }
 
-                    // Generar nombre único
-                    $extension = pathinfo($_FILES['photos']['name'][$key], PATHINFO_EXTENSION);
-                    $fileName = uniqid() . '.' . $extension;
-
-                    $fullPath = $baseDir . $fileName;
-
-                    move_uploaded_file($tmpName, $fullPath);
-
                     // Ruta que se guarda en BD (pública)
-                    $dbPath = '/uploads/clients/' . $client_id . '/cars/' . $car_id . '/' . $fileName;
+                    $dbPath = null;
+
+                    if ($this->cloudinaryStorage->isEnabled()) {
+                        $dbPath = $this->cloudinaryStorage->uploadImage($tmpName, $cloudinaryFolder);
+
+                        if (!$dbPath) {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
 
                     $stmt = $pdo->prepare('
                     INSERT INTO car_photos (car_id, photo_path, created_at)
@@ -135,7 +139,7 @@ class CarController
         }
 
         $_SESSION['success'] = 'Auto registrado correctamente con imágenes.';
-        return redirect('/clients/cars?id=' . $client_id);
+        return redirect(self::CARS_LISTING_URL . $client_id);
     }
 
     public function edit()
@@ -148,12 +152,12 @@ class CarController
 
         $client = $this->clientModel->find($clientId);
         if (!$client) {
-            return view('errors/nopage');
+            return view(self::ERROR_PAGE);
         }
 
         $car = $this->carModel->find($id);
         if (!$car) {
-            return view('errors/nopage');
+            return view(self::ERROR_PAGE);
         }
 
         $photos = $this->carModel->getPhotos($id);
@@ -187,10 +191,10 @@ class CarController
         }
 
         $stmt = $pdo->prepare("
-        UPDATE cars 
-        SET brand = ?, model = ?, year = ?, plate = ?, color = ?, updated_at = NOW()
-        WHERE id = ?
-    ");
+            UPDATE cars 
+            SET brand = ?, model = ?, year = ?, plate = ?, color = ?, updated_at = NOW()
+            WHERE id = ?
+        ");
 
         $stmt->execute([
             $brand,
@@ -205,11 +209,7 @@ class CarController
 
             $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
-            $baseDir = __DIR__ . '/../../public/uploads/clients/' . $client_id . '/cars/' . $car_id . '/';
-
-            if (!is_dir($baseDir)) {
-                mkdir($baseDir, 0777, true);
-            }
+            $cloudinaryFolder = 'carlumbre/clients/' . $client_id . '/cars/' . $car_id;
 
             foreach ($_FILES['photos']['tmp_name'] as $key => $tmpName) {
 
@@ -226,20 +226,43 @@ class CarController
                         continue;
                     }
 
-                    $extension = pathinfo($_FILES['photos']['name'][$key], PATHINFO_EXTENSION);
-                    $fileName  = uniqid() . '.' . $extension;
+                    $dbPath = null;
 
-                    $fullPath  = $baseDir . $fileName;
+                    if ($this->cloudinaryStorage->isEnabled()) {
+                        $dbPath = $this->cloudinaryStorage->uploadImage($tmpName, $cloudinaryFolder);
 
-                    move_uploaded_file($tmpName, $fullPath);
+                        if (!$dbPath) {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
 
-                    $dbPath = '/uploads/clients/' . $client_id . '/cars/' . $car_id . '/' . $fileName;
                     $this->carModel->addPhoto($car_id, $dbPath);
                 }
             }
         }
 
         $_SESSION['success'] = 'Auto actualizado correctamente.';
-        return redirect('/clients/cars?id=' . $client_id);
+        return redirect(self::CARS_LISTING_URL . $client_id);
+    }
+
+    public function delete()
+    {
+        (new AuthMiddleware())->handle();
+        (new PermissionMiddleware('view_clients'))->handle();
+
+        $id = $_GET['id'] ?? null;
+        $clientId = $_GET['client_id'] ?? null;
+
+        $car = $this->carModel->find($id);
+        if (!$car) {
+            return view(self::ERROR_PAGE);
+        }
+
+        $this->carModel->delete($id);
+
+        $_SESSION['success'] = 'Auto eliminado correctamente.';
+        return redirect(self::CARS_LISTING_URL . $clientId);
     }
 }

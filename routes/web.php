@@ -4,9 +4,29 @@ $router->get('/', 'AuthController@showLogin');
 $router->post('/login', 'AuthController@login');
 $router->get('/logout', 'AuthController@logout');
 
+$router->get('/profile', 'ProfileController@index');
+$router->post('/profile/update-password', 'ProfileController@updatePassword');
+
+$router->get('/users', 'UserController@index');
+$router->get('/users/create', 'UserController@create');
+$router->post('/users/store', 'UserController@store');
+$router->get('/users/edit', 'UserController@edit');
+$router->post('/users/update', 'UserController@update');
+$router->get('/users/delete', 'UserController@delete');
+$router->get('/users/roles', 'UserController@roles');
+$router->post('/users/roles/update', 'UserController@updateRolePermissions');
+
 $router->get('/dashboard', 'DashboardController@index');
 
 $router->get('/clients', 'ClientController@index');
+
+$router->get('/products', 'ProductController@index');
+$router->get('/products/create', 'ProductController@create');
+$router->post('/products/store', 'ProductController@store');
+$router->get('/products/edit', 'ProductController@edit');
+$router->post('/products/update', 'ProductController@update');
+$router->get('/products/delete', 'ProductController@delete');
+$router->post('/products/update-image', 'ProductController@updateImage');
 
 $router->get('/clients/create', 'ClientController@create');
 $router->post('/clients/store', 'ClientController@store');
@@ -21,6 +41,7 @@ $router->get('/clients/cars/create', 'CarController@create');
 $router->post('/clients/cars/store', 'CarController@store');
 $router->get('/clients/cars/edit', 'CarController@edit');
 $router->post('/clients/cars/update', 'CarController@update');
+$router->get('/clients/cars/delete', 'CarController@delete');
 $router->get('/clients/cars/delete-photo', 'CarPhotoController@deletePhoto');
 
 $router->get('/services', 'ServiceController@index');
@@ -38,8 +59,26 @@ $router->get('/quotes/edit', 'QuoteController@edit');
 $router->post('/quotes/update', 'QuoteController@update');
 $router->get('/quotes/delete', 'QuoteController@delete');
 $router->get('/quotes/approve', 'QuoteController@approve');
+$router->get('/quotes/create-work-order', 'QuoteController@createWorkOrder');
 $router->get('/quotes/reject', 'QuoteController@reject');
 $router->get('/quotes/pdf', 'QuoteController@generatePdf');
 
+$router->get('/work-orders', 'WorkOrderController@index');
+$router->get('/work-orders/show', 'WorkOrderController@show');
+$router->get('/work-orders/delete', 'WorkOrderController@delete');
+$router->post('/work-orders/add-activity', 'WorkOrderController@addActivity');
+$router->post('/work-orders/update-activity-status', 'WorkOrderController@updateActivityStatus');
+
+$router->get('/billing', 'BillingController@index');
+$router->get('/billing/show', 'BillingController@show');
+$router->post('/billing/generate', 'BillingController@generate');
+$router->post('/billing/update-invoice-number', 'BillingController@updateInvoiceNumber');
+$router->post('/billing/update-status', 'BillingController@updateStatus');
+$router->get('/billing/delete', 'BillingController@delete');
+
+$router->get('/warranties', 'WarrantyController@index');
+
 $router->get('/notifications', 'NotificationController@index');
+$router->post('/notifications/update-message', 'NotificationController@updateMessage');
 $router->get('/notifications/resend', 'NotificationController@resend');
+$router->get('/notifications/delete', 'NotificationController@delete');

@@ -26,12 +26,14 @@ class Service
     {
         $db = Database::connect();
 
-        $stmt = $db->prepare("INSERT INTO {$this->table} (name, description, price, status) VALUES (:name, :description, :price, :status)");
+        $stmt = $db->prepare("INSERT INTO {$this->table} (name, description, price, status, has_warranty, warranty_time_base) VALUES (:name, :description, :price, :status, :has_warranty, :warranty_time_base)");
         return $stmt->execute([
             'name' => $data['name'],
             'description' => $data['description'],
             'price' => $data['price'],
-            'status' => $data['status']
+            'status' => $data['status'],
+            'has_warranty' => $data['has_warranty'],
+            'warranty_time_base' => $data['warranty_time_base']
         ]);
     }
 
@@ -49,13 +51,15 @@ class Service
     {
         $db = Database::connect();
 
-        $stmt = $db->prepare("UPDATE {$this->table} SET name = :name, description = :description, price = :price, status = :status WHERE id = :id");
+        $stmt = $db->prepare("UPDATE {$this->table} SET name = :name, description = :description, price = :price, status = :status, has_warranty = :has_warranty, warranty_time_base = :warranty_time_base WHERE id = :id");
         return $stmt->execute([
             'id' => $id,
             'name' => $data['name'],
             'description' => $data['description'],
             'price' => $data['price'],
-            'status' => $data['status']
+            'status' => $data['status'],
+            'has_warranty' => $data['has_warranty'],
+            'warranty_time_base' => $data['warranty_time_base']
         ]);
     }
 

@@ -15,13 +15,6 @@
 
         <h2>Agregar Auto a <?= htmlspecialchars($client['name']) ?></h2>
 
-        <?php if (!empty($_SESSION['error'])): ?>
-            <div class="alert alert-danger">
-                <?= $_SESSION['error'];
-                unset($_SESSION['error']); ?>
-            </div>
-        <?php endif; ?>
-
         <form action="/clients/cars/store" method="POST" enctype="multipart/form-data">
 
             <input type="hidden" name="client_id" value="<?= $client['id'] ?>">
@@ -70,6 +63,10 @@
         </form>
     </div>
 
+</body>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <?php view('partials/sweetalert'); ?>
     <script>
         function previewImages(event) {
             const preview = document.getElementById('preview');
@@ -92,7 +89,5 @@
             }
         }
     </script>
-
-</body>
 
 </html>

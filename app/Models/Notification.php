@@ -78,7 +78,7 @@ class Notification
         $fields = [];
         $params = ['id' => $id];
 
-        foreach (['status', 'error_message', 'whatsapp_message_id', 'sent_at'] as $field) {
+        foreach (['status', 'error_message', 'whatsapp_message_id', 'sent_at', 'message_content'] as $field) {
             if (isset($data[$field])) {
                 $fields[] = "{$field} = :{$field}";
                 $params[$field] = $data[$field];

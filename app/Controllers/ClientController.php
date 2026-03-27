@@ -9,6 +9,9 @@ use App\Models\Client;
 
 class ClientController
 {
+    const CLIENTS_ROUTE = '/clients';
+    const CLIENTS_CREATE_ROUTE = '/clients/create';
+    const CLIENTS_EDIT_ROUTE = '/clients/edit?id=';
     protected $clientModel;
     protected $carModel;
 
@@ -22,7 +25,8 @@ class ClientController
     {
         (new AuthMiddleware())->handle();
         (new PermissionMiddleware('view_clients'))->handle();
-        $clients = $this->clientModel->all();
+        $search = trim($_GET['search'] ?? '');
+        $clients = $this->clientModel->all($search !== '' ? $search : null);
         return view('clients/index', ['menu' => menu(), 'clients' => $clients]);
     }
 
@@ -61,7 +65,7 @@ class ClientController
 
         if (!$name || !$document_type || !$document_number) {
             $_SESSION['error'] = 'Nombre, tipo de documento y número de documento son obligatorios.';
-            return redirect('/clients/create');
+            return redirect(self::CLIENTS_CREATE_ROUTE);
         }
 
         // Validar email duplicado
@@ -69,7 +73,7 @@ class ClientController
             $searchEmail = $this->clientModel->findByEmail($email);
             if ($searchEmail) {
                 $_SESSION['error'] = 'Este correo ya está registrado.';
-                return redirect('/clients/create');
+                return redirect(self::CLIENTS_CREATE_ROUTE);
             }
         }
 
@@ -77,7 +81,7 @@ class ClientController
 
         if ($searchDocument) {
             $_SESSION['error'] = 'Este número de documento ya está registrado para el tipo seleccionado.';
-            return redirect('/clients/create');
+            return redirect(self::CLIENTS_CREATE_ROUTE);
         }
 
         // Validar teléfono duplicado (si se ingresó)
@@ -85,7 +89,7 @@ class ClientController
             $searchPhone = $this->clientModel->findByPhone($phone);
             if ($searchPhone) {
                 $_SESSION['error'] = 'Este número de teléfono ya está registrado.';
-                return redirect('/clients/create');
+                return redirect(self::CLIENTS_CREATE_ROUTE);
             }
         }
 
@@ -99,7 +103,7 @@ class ClientController
         ]);
 
         $_SESSION['success'] = 'Cliente registrado correctamente.';
-        return redirect('/clients');
+        return redirect(self::CLIENTS_ROUTE);
     }
 
     public function update()
@@ -117,7 +121,7 @@ class ClientController
 
         if (!$name || !$document_type || !$document_number) {
             $_SESSION['error'] = 'Nombre, tipo de documento y número de documento son obligatorios.';
-            return redirect('/clients/edit?id=' . $id);
+            return redirect(self::CLIENTS_EDIT_ROUTE . $id);
         }
 
         // Validar email duplicado
@@ -125,7 +129,7 @@ class ClientController
             $validateEmail = $this->clientModel->findByEmailAndId($email, $id);
             if ($validateEmail) {
                 $_SESSION['error'] = 'Este correo ya está registrado.';
-                return redirect('/clients/edit?id=' . $id);
+                return redirect(self::CLIENTS_EDIT_ROUTE . $id);
             }
         }
 
@@ -133,7 +137,7 @@ class ClientController
 
         if ($validateDocument) {
             $_SESSION['error'] = 'Este número de documento ya está registrado para el tipo seleccionado.';
-            return redirect('/clients/edit?id=' . $id);
+            return redirect(self::CLIENTS_EDIT_ROUTE . $id);
         }
 
 
@@ -142,7 +146,7 @@ class ClientController
             $validatePhone = $this->clientModel->findByPhoneAndId($phone, $id);
             if ($validatePhone) {
                 $_SESSION['error'] = 'Este número de teléfono ya está registrado.';
-                return redirect('/clients/edit?id=' . $id);
+                return redirect(self::CLIENTS_EDIT_ROUTE . $id);
             }
         }
 
@@ -156,7 +160,7 @@ class ClientController
         ]);
 
         $_SESSION['success'] = 'Cliente actualizado correctamente.';
-        return redirect('/clients');
+        return redirect(self::CLIENTS_ROUTE);
     }
 
     public function delete()
@@ -170,7 +174,7 @@ class ClientController
         }
         $this->clientModel->delete($id);
         $_SESSION['success'] = 'Cliente eliminado correctamente.';
-        return redirect('/clients');
+        return redirect(self::CLIENTS_ROUTE);
     }
 
     public function show()

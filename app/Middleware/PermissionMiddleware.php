@@ -13,12 +13,18 @@ class PermissionMiddleware
 
   public function handle()
   {
-    if (
-      empty($_SESSION['user']) ||
-      !in_array($this->permission, $_SESSION['user']['permissions'])
-    ) {
+    if (empty($_SESSION['user'])) {
+      redirect('/');
+    }
+
+    if (!in_array($this->permission, $_SESSION['user']['permissions'])) {
       http_response_code(403);
-      echo '⛔ No tienes permiso.';
+      $backUrl = $_SERVER['HTTP_REFERER'] ?? firstAccessibleUrl('/dashboard');
+
+      view('errors/forbidden', [
+        'backUrl' => $backUrl,
+      ]);
+
       exit;
     }
   }

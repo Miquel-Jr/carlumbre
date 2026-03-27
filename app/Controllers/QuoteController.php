@@ -10,17 +10,24 @@ use App\Models\Client;
 use App\Models\Service;
 use App\Models\Quote;
 use App\Models\QuoteItems;
+use App\Models\Product;
+use App\Models\WorkOrder;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Throwable;
 
 class QuoteController
 {
+    private const QUOTES_ROUTE = '/quotes';
+    private const QUOTE_ID_ERROR = 'ID de presupuesto no proporcionado.';
     protected $clientModel;
     protected $carModel;
     protected $serviceModel;
     protected $carPhotoModel;
     protected $quoteModel;
     protected $quoteItemsModel;
+    protected $productModel;
+    protected $workOrderModel;
     public function __construct()
     {
         $this->clientModel = new Client();
@@ -29,12 +36,15 @@ class QuoteController
         $this->carPhotoModel = new CarPhoto();
         $this->quoteModel = new Quote();
         $this->quoteItemsModel = new QuoteItems();
+        $this->productModel = new Product();
+        $this->workOrderModel = new WorkOrder();
     }
     public function index()
     {
         (new AuthMiddleware())->handle();
         (new PermissionMiddleware('view_quotes'))->handle();
-        $quotes = $this->quoteModel->all();
+        $search = trim($_GET['search'] ?? '');
+        $quotes = $this->quoteModel->all($search !== '' ? $search : null);
         return view('quotes/index', ['quotes' => $quotes]);
     }
 
@@ -46,9 +56,10 @@ class QuoteController
         $clients = $this->clientModel->all();
         $cars = $this->carModel->all();
         $services = $this->serviceModel->all();
+        $products = $this->productModel->all();
         $photos = $this->carPhotoModel->all();
 
-        return view('quotes/create', ['clients' => $clients, 'cars' => $cars, 'services' => $services, 'photos' => $photos]);
+        return view('quotes/create', ['clients' => $clients, 'cars' => $cars, 'services' => $services, 'products' => $products, 'photos' => $photos]);
     }
 
     public function store()
@@ -63,8 +74,9 @@ class QuoteController
         $notes = $_POST['notes'] ?? null;
 
         if (!$clientId || !$carId || !$total) {
-            $_SESSION['error'] = 'El cliente, el coche y el total son campos obligatorios.';
-            return redirect('/quotes/create');
+            $_SESSION['error'] = 'El cliente, el coche y el total son campos obligatorios.'. $clientId. '-' . $carId . '-' . $total;
+
+            return redirect(self::QUOTES_ROUTE . '/create');
         }
 
         $quoteId = $this->quoteModel->create([
@@ -79,20 +91,66 @@ class QuoteController
         $descripcions = $_POST['descriptions'] ?? [];
         $quantities = $_POST['quantities'] ?? [];
         $prices = $_POST['prices'] ?? [];
+        $hasWarranties = $_POST['has_warranties'] ?? [];
+        $warrantyTimes = $_POST['warranty_times'] ?? [];
+        $partIds = $_POST['part_ids'] ?? [];
+        $partDescriptions = $_POST['part_descriptions'] ?? [];
+        $partQuantities = $_POST['part_quantities'] ?? [];
+        $partPrices = $_POST['part_prices'] ?? [];
+        $partImages = $_POST['part_images'] ?? [];
 
         foreach ($services as $index => $serviceId) {
+            if (empty($serviceId)) {
+                continue;
+            }
+
+            $hasWarranty = (int) ($hasWarranties[$index] ?? 0) === 1 ? 1 : 0;
+            $warrantyTimeBase = null;
+
+            if ($hasWarranty === 1) {
+                $candidateTime = (int) ($warrantyTimes[$index] ?? 0);
+                $warrantyTimeBase = $candidateTime > 0 ? $candidateTime : 1;
+            }
+
             $this->quoteItemsModel->create([
                 'quote_id' => $quoteId,
                 'service_id' => $serviceId,
+                'item_type' => 'service',
                 'description' => $descripcions[$index] ?? '',
                 'quantity' => $quantities[$index] ?? 1,
                 'price' => $prices[$index] ?? 0,
-                'subtotal' => ($quantities[$index] ?? 1) * ($prices[$index] ?? 0)
+                'subtotal' => ($quantities[$index] ?? 1) * ($prices[$index] ?? 0),
+                'has_warranty' => $hasWarranty,
+                'warranty_time_base' => $warrantyTimeBase
+            ]);
+        }
+
+        foreach ($partIds as $index => $partId) {
+            $partDescription = trim((string) ($partDescriptions[$index] ?? ''));
+            $partQuantity = (int) ($partQuantities[$index] ?? 1);
+            $partPrice = (float) ($partPrices[$index] ?? 0);
+
+            if ($partDescription === '' || $partQuantity < 1) {
+                continue;
+            }
+
+            $this->quoteItemsModel->create([
+                'quote_id' => $quoteId,
+                'service_id' => null,
+                'product_id' => !empty($partId) ? (int) $partId : null,
+                'item_type' => 'product',
+                'description' => $partDescription,
+                'quantity' => $partQuantity,
+                'price' => $partPrice,
+                'subtotal' => $partQuantity * $partPrice,
+                'has_warranty' => 0,
+                'warranty_time_base' => null,
+                'reference_image_url' => trim((string) ($partImages[$index] ?? '')) ?: null
             ]);
         }
 
         $_SESSION['success'] = 'Presupuesto creado exitosamente.';
-        return redirect('/quotes');
+        return redirect(self::QUOTES_ROUTE);
     }
 
     public function edit()
@@ -102,23 +160,24 @@ class QuoteController
 
         $quoteId = $_GET['id'] ?? null;
         if (!$quoteId) {
-            $_SESSION['error'] = 'ID de presupuesto no proporcionado.';
-            return redirect('/quotes');
+            $_SESSION['error'] = self::QUOTE_ID_ERROR;
+            return redirect(self::QUOTES_ROUTE);
         }
 
         $quote = $this->quoteModel->find($quoteId);
         if (!$quote) {
             $_SESSION['error'] = 'Presupuesto no encontrado.';
-            return redirect('/quotes');
+            return redirect(self::QUOTES_ROUTE);
         }
 
         $clients = $this->clientModel->all();
         $cars = $this->carModel->all();
         $services = $this->serviceModel->all();
+        $products = $this->productModel->all();
         $photos = $this->carPhotoModel->all();
         $items = $this->quoteItemsModel->getByQuoteId($quoteId);
 
-        return view('quotes/edit', ['quote' => $quote, 'clients' => $clients, 'cars' => $cars, 'services' => $services, 'photos' => $photos, 'items' => $items]);
+        return view('quotes/edit', ['quote' => $quote, 'clients' => $clients, 'cars' => $cars, 'services' => $services, 'products' => $products, 'photos' => $photos, 'items' => $items]);
     }
 
     public function update()
@@ -127,8 +186,8 @@ class QuoteController
         (new PermissionMiddleware('view_quotes'))->handle();
         $quoteId = $_POST['id'] ?? null;
         if (!$quoteId) {
-            $_SESSION['error'] = 'ID de presupuesto no proporcionado.';
-            return redirect('/quotes');
+            $_SESSION['error'] = self::QUOTE_ID_ERROR;
+            return redirect(self::QUOTES_ROUTE);
         }
         $clientId = $_POST['client_id'];
         $carId = $_POST['car_id'];
@@ -137,8 +196,8 @@ class QuoteController
         $notes = $_POST['notes'] ?? null;
 
         if (!$clientId || !$carId || !$total) {
-            $_SESSION['error'] = 'El cliente, el coche y el total son campos obligatorios.';
-            return redirect('/quotes/edit?id=' . $quoteId);
+            $_SESSION['error'] = 'El cliente, el coche y el total son campos obligatorios.'. $clientId. '-' . $carId . '-' . $total;
+            return redirect(self::QUOTES_ROUTE . '/edit?id=' . $quoteId);
         }
 
         $this->quoteModel->update($quoteId, [
@@ -157,22 +216,68 @@ class QuoteController
         $descriptions = $_POST['descriptions'] ?? [];
         $quantities = $_POST['quantities'] ?? [];
         $prices = $_POST['prices'] ?? [];
+        $hasWarranties = $_POST['has_warranties'] ?? [];
+        $warrantyTimes = $_POST['warranty_times'] ?? [];
+        $partIds = $_POST['part_ids'] ?? [];
+        $partDescriptions = $_POST['part_descriptions'] ?? [];
+        $partQuantities = $_POST['part_quantities'] ?? [];
+        $partPrices = $_POST['part_prices'] ?? [];
+        $partImages = $_POST['part_images'] ?? [];
 
         foreach ($services as $index => $serviceId) {
+            if (empty($serviceId)) {
+                continue;
+            }
+
             if (isset($descriptions[$index]) && isset($quantities[$index]) && isset($prices[$index])) {
+                $hasWarranty = (int) ($hasWarranties[$index] ?? 0) === 1 ? 1 : 0;
+                $warrantyTimeBase = null;
+
+                if ($hasWarranty === 1) {
+                    $candidateTime = (int) ($warrantyTimes[$index] ?? 0);
+                    $warrantyTimeBase = $candidateTime > 0 ? $candidateTime : 1;
+                }
+
                 $this->quoteItemsModel->create([
                     'quote_id' => $quoteId,
                     'service_id' => $serviceId,
+                    'item_type' => 'service',
                     'description' => htmlspecialchars($descriptions[$index]),
                     'quantity' => (int)$quantities[$index],
                     'price' => (float)$prices[$index],
-                    'subtotal' => (int)$quantities[$index] * (float)$prices[$index]
+                    'subtotal' => (int)$quantities[$index] * (float)$prices[$index],
+                    'has_warranty' => $hasWarranty,
+                    'warranty_time_base' => $warrantyTimeBase
                 ]);
             }
         }
 
+        foreach ($partIds as $index => $partId) {
+            $partDescription = trim((string) ($partDescriptions[$index] ?? ''));
+            $partQuantity = (int) ($partQuantities[$index] ?? 1);
+            $partPrice = (float) ($partPrices[$index] ?? 0);
+
+            if ($partDescription === '' || $partQuantity < 1) {
+                continue;
+            }
+
+            $this->quoteItemsModel->create([
+                'quote_id' => $quoteId,
+                'service_id' => null,
+                'product_id' => !empty($partId) ? (int) $partId : null,
+                'item_type' => 'product',
+                'description' => htmlspecialchars($partDescription),
+                'quantity' => $partQuantity,
+                'price' => $partPrice,
+                'subtotal' => $partQuantity * $partPrice,
+                'has_warranty' => 0,
+                'warranty_time_base' => null,
+                'reference_image_url' => trim((string) ($partImages[$index] ?? '')) ?: null
+            ]);
+        }
+
         $_SESSION['success'] = 'Presupuesto actualizado exitosamente.';
-        return redirect('/quotes');
+        return redirect(self::QUOTES_ROUTE);
     }
 
     public function delete()
@@ -182,13 +287,13 @@ class QuoteController
 
         $quoteId = $_GET['id'] ?? null;
         if (!$quoteId) {
-            $_SESSION['error'] = 'ID de presupuesto no proporcionado.';
-            return redirect('/quotes');
+            $_SESSION['error'] = self::QUOTE_ID_ERROR;
+            return redirect(self::QUOTES_ROUTE);
         }
 
         $this->quoteModel->delete($quoteId);
         $_SESSION['success'] = 'Presupuesto eliminado exitosamente.';
-        return redirect('/quotes');
+        return redirect(self::QUOTES_ROUTE);
     }
 
     public function approve()
@@ -198,13 +303,69 @@ class QuoteController
 
         $quoteId = $_GET['id'] ?? null;
         if (!$quoteId) {
-            $_SESSION['error'] = 'ID de presupuesto no proporcionado.';
-            return redirect('/quotes');
+            $_SESSION['error'] = self::QUOTE_ID_ERROR;
+            return redirect(self::QUOTES_ROUTE);
         }
 
         $this->quoteModel->updateStatus($quoteId, 'approved');
-        $_SESSION['success'] = 'Presupuesto aprobado exitosamente.';
-        return redirect('/quotes');
+
+        try {
+            $workOrderResult = $this->workOrderModel->createFromQuote((int) $quoteId);
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $_SESSION['error'] = 'Presupuesto aprobado, pero no se pudo generar la OT por un bloqueo temporal. Intenta nuevamente.';
+            return redirect(self::QUOTES_ROUTE);
+        }
+
+        if (!empty($workOrderResult['work_order_id'])) {
+            if (!empty($workOrderResult['created'])) {
+                $_SESSION['success'] = 'Presupuesto aprobado y OT #' . $workOrderResult['work_order_id'] . ' generada automáticamente.';
+            } else {
+                $_SESSION['success'] = 'Presupuesto aprobado. La OT #' . $workOrderResult['work_order_id'] . ' ya existía.';
+            }
+        } else {
+            $_SESSION['success'] = 'Presupuesto aprobado exitosamente.';
+        }
+
+        return redirect(self::QUOTES_ROUTE);
+    }
+
+    public function createWorkOrder()
+    {
+        (new AuthMiddleware())->handle();
+        (new PermissionMiddleware('view_quotes'))->handle();
+
+        $quoteId = $_GET['id'] ?? null;
+        if (!$quoteId) {
+            $_SESSION['error'] = self::QUOTE_ID_ERROR;
+            return redirect(self::QUOTES_ROUTE);
+        }
+
+        $quote = $this->quoteModel->find($quoteId);
+        if (!$quote) {
+            $_SESSION['error'] = 'Presupuesto no encontrado.';
+            return redirect(self::QUOTES_ROUTE);
+        }
+
+        try {
+            $workOrderResult = $this->workOrderModel->createFromQuote((int) $quoteId);
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            $_SESSION['error'] = 'No se pudo generar la OT por un bloqueo temporal. Intenta nuevamente.';
+            return redirect(self::QUOTES_ROUTE);
+        }
+
+        if (!empty($workOrderResult['work_order_id'])) {
+            if (!empty($workOrderResult['created'])) {
+                $_SESSION['success'] = 'OT #' . $workOrderResult['work_order_id'] . ' generada correctamente.';
+            } else {
+                $_SESSION['success'] = 'La OT #' . $workOrderResult['work_order_id'] . ' ya existía para este presupuesto.';
+            }
+        } else {
+            $_SESSION['error'] = 'No se pudo generar la OT para este presupuesto.';
+        }
+
+        return redirect(self::QUOTES_ROUTE);
     }
 
     public function reject()
@@ -214,16 +375,16 @@ class QuoteController
 
         $quoteId = $_GET['id'] ?? null;
         if (!$quoteId) {
-            $_SESSION['error'] = 'ID de presupuesto no proporcionado.';
-            return redirect('/quotes');
+            $_SESSION['error'] = self::QUOTE_ID_ERROR;
+            return redirect(self::QUOTES_ROUTE);
         }
 
         $this->quoteModel->updateStatus($quoteId, 'rejected');
         $_SESSION['success'] = 'Presupuesto rechazado exitosamente.';
-        return redirect('/quotes');
+        return redirect(self::QUOTES_ROUTE);
     }
 
-    function imageToBase64($path)
+    private function imageToBase64($path)
     {
         $type = pathinfo($path, PATHINFO_EXTENSION);
         $data = file_get_contents($path);
@@ -236,23 +397,25 @@ class QuoteController
 
         $id = $_GET['id'] ?? null;
         if (!$id) {
-            $_SESSION['error'] = 'ID de presupuesto no proporcionado.';
-            return redirect('/quotes');
+            $_SESSION['error'] = self::QUOTE_ID_ERROR;
+            return redirect(self::QUOTES_ROUTE);
         }
 
         $quote = $this->quoteModel->generatePdf($id);
 
         if (!$quote) {
             $_SESSION['error'] = 'Presupuesto no encontrado.';
-            return redirect('/quotes');
+            return redirect(self::QUOTES_ROUTE);
         }
 
-        $items = $this->quoteItemsModel->getByQuoteId($id);
+        $idPresupuesto = str_pad($quote['id'], 8, '0', STR_PAD_LEFT);
 
-        $logoBase64 = $this->imageToBase64(__DIR__ . '/../../public/uploads/carlumbre/Icon.jpeg');
-        $facebookIcon = $this->imageToBase64(__DIR__ . '/../../public/uploads/carlumbre/facebook.png');
-        $instagramIcon = $this->imageToBase64(__DIR__ . '/../../public/uploads/carlumbre/instagram.png');
-        $whatsappIcon = $this->imageToBase64(__DIR__ . '/../../public/uploads/carlumbre/whatsapp.png');
+        $items = $this->quoteItemsModel->getByQuoteId($id);
+        $logoBase64 = $this->imageToBase64(__DIR__ . '/../../public/assets/carlumbre/Icon.jpeg');
+        $carPng = $this->imageToBase64(__DIR__ . '/../../public/assets/carlumbre/CarLumbre.png');
+        $facebookIcon = $this->imageToBase64(__DIR__ . '/../../public/assets/carlumbre/facebook.png');
+        $instagramIcon = $this->imageToBase64(__DIR__ . '/../../public/assets/carlumbre/instagram.png');
+        $whatsappIcon = $this->imageToBase64(__DIR__ . '/../../public/assets/carlumbre/whatsapp.png');
 
 
         // Generar HTML
@@ -268,6 +431,6 @@ class QuoteController
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
 
-        $dompdf->stream("Presupuesto-{$id}.pdf", ["Attachment" => false]);
+        $dompdf->stream("Presupuesto-{$idPresupuesto}.pdf", ["Attachment" => true]);
     }
 }

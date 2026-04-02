@@ -116,15 +116,9 @@ class CarController
                     }
 
                     // Ruta que se guarda en BD (pública)
-                    $dbPath = null;
+                    $dbPath = $this->cloudinaryStorage->uploadImage($tmpName, $cloudinaryFolder);
 
-                    if ($this->cloudinaryStorage->isEnabled()) {
-                        $dbPath = $this->cloudinaryStorage->uploadImage($tmpName, $cloudinaryFolder);
-
-                        if (!$dbPath) {
-                            continue;
-                        }
-                    } else {
+                    if (!$dbPath) {
                         continue;
                     }
 
@@ -226,15 +220,9 @@ class CarController
                         continue;
                     }
 
-                    $dbPath = null;
+                    $dbPath = $this->cloudinaryStorage->uploadImage($tmpName, $cloudinaryFolder);
 
-                    if ($this->cloudinaryStorage->isEnabled()) {
-                        $dbPath = $this->cloudinaryStorage->uploadImage($tmpName, $cloudinaryFolder);
-
-                        if (!$dbPath) {
-                            continue;
-                        }
-                    } else {
+                    if (!$dbPath) {
                         continue;
                     }
 

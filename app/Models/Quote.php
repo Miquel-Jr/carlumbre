@@ -56,13 +56,14 @@ class Quote
     {
         $db = Database::connect();
 
-        $stmt = $db->prepare("INSERT INTO {$this->table} (client_id, car_id, total, status, notes) VALUES (:client_id, :car_id, :total, :status, :notes)");
+        $stmt = $db->prepare("INSERT INTO {$this->table} (client_id, car_id, total, status, notes, created_at) VALUES (:client_id, :car_id, :total, :status, :notes, :created_at)");
         $stmt->execute([
             'client_id' => $data['client_id'],
             'car_id' => $data['car_id'],
             'total' => $data['total'],
             'notes' => $data['notes'],
-            'status' => $data['status']
+            'status' => $data['status'],
+            'created_at' => $data['created_at']
         ]);
 
         return $db->lastInsertId();

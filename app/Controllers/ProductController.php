@@ -278,9 +278,9 @@ class ProductController
         }
 
         $mimeType = (string) mime_content_type($tmpName);
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/gif'];
         if (!in_array($mimeType, $allowedTypes, true)) {
-            $_SESSION['error'] = 'Formato no permitido. Usa JPG, PNG o WEBP.';
+            $_SESSION['error'] = 'Formato no permitido. Usa JPG, PNG, GIF o WEBP.';
             return null;
         }
 
@@ -289,16 +289,11 @@ class ProductController
             return null;
         }
 
-        if (!$this->cloudinaryStorage->isEnabled()) {
-            $_SESSION['error'] = 'Cloudinary no está configurado.';
-            return null;
-        }
-
         $folder = 'carlumbre/products/' . trim($folderSuffix, '/');
         $uploadedUrl = $this->cloudinaryStorage->uploadImage($tmpName, $folder);
 
         if (!$uploadedUrl) {
-            $_SESSION['error'] = 'No se pudo subir la imagen a Cloudinary.';
+            $_SESSION['error'] = 'No se pudo subir la imagen.';
             return null;
         }
 

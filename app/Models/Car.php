@@ -18,7 +18,7 @@ class Car
     public function getByClientId($clientId)
     {
         $db = Database::connect();
-        $stmt = $db->prepare("SELECT * FROM {$this->table} WHERE client_id = :client_id");
+        $stmt = $db->prepare("SELECT * FROM {$this->table} WHERE client_id = :client_id ORDER BY created_at DESC");
         $stmt->execute(['client_id' => $clientId]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }

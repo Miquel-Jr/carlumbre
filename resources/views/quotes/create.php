@@ -25,7 +25,7 @@
         <div class="card-body">
 
           <div class="row mb-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label for="clientSelect" class="form-label">Cliente *</label>
               <select name="client_id" id="clientSelect" class="form-select" required>
                 <option value="">Seleccionar cliente</option>
@@ -37,7 +37,7 @@
               </select>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label for="carSelect" class="form-label">Auto *</label>
               <select name="car_id" id="carSelect" class="form-select" required>
                 <option value="">Seleccionar auto</option>
@@ -47,6 +47,11 @@
                 </option>
                 <?php endforeach; ?>
               </select>
+            </div>
+
+            <div class="col-md-4">
+              <label for="carSelect" class="form-label">Fecha de registro</label>
+              <input name="created_at" type="date" class="form-control">
             </div>
 
             <div class="row mt-4">

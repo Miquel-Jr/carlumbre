@@ -19,10 +19,9 @@
         <?php if (!empty($invoice)): ?>
         <a href="/billing/show?id=<?= (int) $invoice['id'] ?>" class="btn btn-dark">Ver factura</a>
         <?php else: ?>
-        <form method="POST" action="/billing/generate" class="d-inline">
-          <input type="hidden" name="work_order_id" value="<?= (int) $workOrder['id'] ?>">
-          <button type="submit" class="btn btn-success">Generar factura</button>
-        </form>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalGenerarFactura">
+          Generar factura
+        </button>
         <?php endif; ?>
         <?php endif; ?>
         <a href="/work-orders" class="btn btn-secondary">Volver</a>
@@ -147,8 +146,35 @@
     </div>
   </div>
 
+  <!-- Modal Generar Factura -->
+  <div class="modal fade" id="modalGenerarFactura" tabindex="-1" aria-labelledby="modalGenerarFacturaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form method="POST" action="/billing/generate">
+          <input type="hidden" name="work_order_id" value="<?= (int) $workOrder['id'] ?>">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalGenerarFacturaLabel">Generar factura</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="issuedAt" class="form-label">Fecha de emisión <span class="text-danger">*</span></label>
+              <input type="date" id="issuedAt" name="issued_at" class="form-control" required
+                value="<?= date('Y-m-d') ?>">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success">Generar factura</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <?php view('partials/sweetalert'); ?>
   <?php view('partials/mobile-table-cards'); ?>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

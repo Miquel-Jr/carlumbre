@@ -8,6 +8,7 @@ use App\Middleware\AuthMiddleware;
 use App\Middleware\PermissionMiddleware;
 use App\Models\Car;
 use App\Models\Client;
+use App\Models\Quote;
 
 class CarController
 {
@@ -17,12 +18,13 @@ class CarController
     protected $clientModel;
     protected $carModel;
     protected $cloudinaryStorage;
-
+    protected $quoteModel;
     public function __construct()
     {
         $this->clientModel = new Client();
         $this->carModel = new Car();
         $this->cloudinaryStorage = new CloudinaryStorage();
+        $this->quoteModel = new Quote();
     }
 
     public function index()
@@ -41,11 +43,14 @@ class CarController
         foreach ($cars as &$car) {
             $car['photos'] = $this->carModel->getPhotos($car['id']);
         }
-        unset($car); // buena práctica al usar referencias
+        unset($car);
+
+        $quotes = $this->quoteModel->getByClientId($id);
 
         return view('clients/cars/index', [
             'client' => $client,
             'cars' => $cars,
+            'quotes' => $quotes,
         ]);
     }
 

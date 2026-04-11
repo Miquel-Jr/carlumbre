@@ -252,7 +252,7 @@
 
   .reference-image {
     width: 150px;
-    height: 105px;
+    height: auto;
     object-fit: cover;
     opacity: 0.84;
   }
@@ -399,10 +399,19 @@
     <?php
         $firstReferenceImage = null;
         foreach ($items as $item) {
-            if (!empty($item['reference_image_url'])) {
-                $firstReferenceImage = $item['reference_image_url'];
-                break;
+          if (!empty($item['reference_image_url'])) {
+            if (!filter_var($item['reference_image_url'], FILTER_VALIDATE_URL)) {
+              $path = $_SERVER['DOCUMENT_ROOT'] . $item['reference_image_url'];
+              if (file_exists($path)) {
+                $firstReferenceImage = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($path));
+              } else {
+                $firstReferenceImage = null;
+              }
+            } else {
+              $firstReferenceImage = $item['reference_image_url'];
             }
+            break;
+          }
         }
         
         if ($quote['document_type'] === '1') {

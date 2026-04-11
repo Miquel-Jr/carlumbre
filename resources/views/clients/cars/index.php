@@ -108,6 +108,102 @@
     </table>
 
     <br>
+
+    <h1>Listar los presupuestos</h1>
+
+    <table class="table table-striped table-bordered table-mobile-card">
+      <thead class="table-dark">
+        <tr>
+          <th>#</th>
+          <th>Auto</th>
+          <th>Total</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+          <th width="250">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if (!empty($quotes)): ?>
+        <?php foreach ($quotes as $quote): ?>
+        <tr>
+          <td><?= $quote['id'] ?></td>
+
+          <td>
+            <?= htmlspecialchars($quote['car_info']) ?>
+          </td>
+
+          <td>
+            S/ <?= number_format($quote['total'], 2) ?>
+          </td>
+
+          <td>
+            <?php if ($quote['status'] === 'pending'): ?>
+            <span class="badge bg-warning text-dark">Pendiente</span>
+            <?php elseif ($quote['status'] === 'approved'): ?>
+            <span class="badge bg-success">Aprobado</span>
+            <?php elseif ($quote['status'] === 'rejected'): ?>
+            <span class="badge bg-secondary">Rechazado</span>
+            <?php endif; ?>
+          </td>
+
+          <td>
+            <?= date('d/m/Y', strtotime($quote['created_at'])) ?>
+          </td>
+
+          <td>
+
+            <a href="/quotes/pdf?id=<?= $quote['id'] ?>" class="btn btn-sm btn-warning">
+              Descargar
+            </a>
+
+            <?php if ($quote['status'] === 'approved' && !empty($quote['work_order_id'])): ?>
+            <a href="/work-orders/show?id=<?= (int) $quote['work_order_id'] ?>" class="btn btn-sm btn-dark">
+              Ver OT
+            </a>
+            <?php endif; ?>
+
+            <?php if ($quote['status'] === 'approved' && empty($quote['work_order_id'])): ?>
+            <a class="btn btn-sm btn-outline-dark" onclick="createWorkOrder('<?= $quote['id'] ?>')">
+              Crear OT
+            </a>
+            <?php endif; ?>
+
+            <?php if ($quote['status'] === 'pending'): ?>
+
+            <a href="/quotes/edit?id=<?= $quote['id'] ?>" class="btn btn-sm btn-warning">
+              Editar
+            </a>
+
+            <a class="btn btn-sm btn-success" onclick="approveQuote('<?= $quote['id'] ?>')">
+              Aprobar
+            </a>
+
+            <a class="btn btn-sm btn-secondary" onclick="rejectQuote('<?= $quote['id'] ?>')">
+              Rechazar
+            </a>
+
+            <?php endif; ?>
+
+            <a class="btn btn-sm btn-danger" onclick="deleteQuote('<?= $quote['id'] ?>')">
+              Eliminar
+            </a>
+
+          </td>
+        </tr>
+        <?php endforeach; ?>
+        <?php else: ?>
+
+        <tr>
+          <td colspan="7" class="text-center">
+            No hay presupuestos registrados.
+          </td>
+        </tr>
+
+        <?php endif; ?>
+      </tbody>
+    </table>
+
+    <br>
     <a href="/clients" class="btn btn-sm btn-warning">Volver al inicio</a>
   </div>
 </body>
@@ -133,6 +229,74 @@ function deleteCar(id, clientId) {
     }
   });
 };
+
+function deleteQuote(id) {
+  Swal.fire({
+    title: '¿Eliminar presupuesto?',
+    text: "Esta acción no se puede deshacer.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = `/quotes/delete?id=${id}`;
+    }
+  });
+}
+
+function approveQuote(id) {
+  Swal.fire({
+    title: '¿Aprobar presupuesto?',
+    text: "¿Estás seguro de aprobar este presupuesto?",
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#28a745',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sí, aprobar',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = `/quotes/approve?id=${id}`;
+    }
+  });
+}
+
+function rejectQuote(id) {
+  Swal.fire({
+    title: '¿Rechazar presupuesto?',
+    text: "¿Estás seguro de rechazar este presupuesto?",
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#6c757d',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sí, rechazar',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = `/quotes/reject?id=${id}`;
+    }
+  });
+}
+
+function createWorkOrder(id) {
+  Swal.fire({
+    title: '¿Crear orden de trabajo?',
+    text: 'Se generará una OT con las actividades del presupuesto aprobado.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#212529',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sí, crear OT',
+    cancelButtonText: 'Cancelar'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      window.location.href = `/quotes/create-work-order?id=${id}`;
+    }
+  });
+}
 </script>
 
 </html>

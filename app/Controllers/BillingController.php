@@ -73,12 +73,18 @@ class BillingController
             return redirect('/work-orders');
         }
 
+        $issuedAt = $_POST['issued_at'] ?? null;
+        if (!$issuedAt || !strtotime($issuedAt)) {
+            $_SESSION['error'] = 'Fecha de emisión inválida.';
+            return redirect('/work-orders/show?id=' . (int) $workOrderId);
+        }
+
         $workOrder = $this->workOrderModel->find($workOrderId);
         if (!$workOrder) {
             return view(self::ERROR_PAGE);
         }
 
-        $result = $this->invoiceModel->createFromWorkOrder((int) $workOrderId);
+        $result = $this->invoiceModel->createFromWorkOrder((int) $workOrderId, $issuedAt);
 
         if (!empty($result['invoice_id'])) {
             $_SESSION['success'] = $result['message'] ?? 'Factura generada correctamente.';

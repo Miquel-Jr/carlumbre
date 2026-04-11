@@ -93,7 +93,7 @@ class Invoice
     return $stmt->fetch(PDO::FETCH_ASSOC);
   }
 
-  public function createFromWorkOrder($workOrderId)
+  public function createFromWorkOrder($workOrderId, $issuedAt = null)
   {
     $db = Database::connect();
 
@@ -157,7 +157,7 @@ class Invoice
 
       $insertInvoiceStmt = $db->prepare("INSERT INTO {$this->table}
                 (work_order_id, quote_id, client_id, total, status, issued_at, created_at, updated_at)
-                VALUES (:work_order_id, :quote_id, :client_id, :total, :status, NOW(), NOW(), NOW())");
+                VALUES (:work_order_id, :quote_id, :client_id, :total, :status, :issued_at, NOW(), NOW())");
 
       $insertInvoiceStmt->execute([
         'work_order_id' => $workOrder['id'],
@@ -165,6 +165,7 @@ class Invoice
         'client_id' => $workOrder['client_id'],
         'total' => round($total, 2),
         'status' => 'issued',
+        'issued_at' => $issuedAt ?? date('Y-m-d'),
       ]);
 
       $invoiceId = (int) $db->lastInsertId();

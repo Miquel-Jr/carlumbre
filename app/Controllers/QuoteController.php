@@ -72,6 +72,7 @@ class QuoteController
         $total = $_POST['total'] ?? null;
         $status = $_POST['status'] ?? 'pending';
         $notes = $_POST['notes'] ?? null;
+        $createdAt = $_POST['created_at'] ?? null;
 
         if (!$clientId || !$carId || !$total) {
             $_SESSION['error'] = 'El cliente, el coche y el total son campos obligatorios.'. $clientId. '-' . $carId . '-' . $total;
@@ -84,7 +85,8 @@ class QuoteController
             'car_id' => $carId,
             'total' => $total,
             'status' => $status,
-            'notes' => $notes
+            'notes' => $notes,
+            'created_at' => $createdAt
         ]);
 
         $services = $_POST['services'] ?? [];

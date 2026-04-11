@@ -13,6 +13,8 @@ class CloudinaryStorage
 
     public function __construct()
     {
+        $this->localUploadDir = dirname(__DIR__, 2) . '/public/uploads';
+        
         $config = require __DIR__ . '/../../config/cloudinary.php';
 
         $cloudName = trim((string) ($config['cloud_name'] ?? ''));
@@ -35,8 +37,6 @@ class CloudinaryStorage
         ]);
 
         $this->enabled = true;
-        
-        $this->localUploadDir = dirname(__DIR__, 2) . '/public/uploads';
     }
 
     public function isEnabled(): bool
@@ -83,9 +83,16 @@ class CloudinaryStorage
 
         if (!is_dir($uploadDir)) {
             if (@mkdir($uploadDir, 0755, true) === false) {
-                return null;
+                // Intenta crear con permisos más permisivos
+                @chmod($uploadDir, 0777);
+                if (!is_dir($uploadDir)) {
+                    return null;
+                }
             }
         }
+
+        // Asegurar permisos de escritura
+        @chmod($uploadDir, 0777);
 
         $extension = $this->getExtensionFromMimeType($tmpFilePath);
         if ($extension === null) {
@@ -98,6 +105,8 @@ class CloudinaryStorage
         if (@copy($tmpFilePath, $targetPath) === false) {
             return null;
         }
+
+        @chmod($targetPath, 0644);
 
         $folderPath = $folder !== '' ? trim((string) $folder, '/') . '/' : '';
         return '/uploads/' . $folderPath . $filename;

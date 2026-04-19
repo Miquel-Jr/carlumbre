@@ -63,8 +63,8 @@ class ClientController
         $document_number = trim($_POST['document_number'] ?? '');
 
 
-        if (!$name || !$document_type || !$document_number) {
-            $_SESSION['error'] = 'Nombre, tipo de documento y número de documento son obligatorios.';
+        if (!$name) {
+            $_SESSION['error'] = 'Nombre es obligatorio.';
             return redirect(self::CLIENTS_CREATE_ROUTE);
         }
 
@@ -77,11 +77,14 @@ class ClientController
             }
         }
 
-        $searchDocument = $this->clientModel->findByDocument($document_type, $document_number);
-
-        if ($searchDocument) {
-            $_SESSION['error'] = 'Este número de documento ya está registrado para el tipo seleccionado.';
-            return redirect(self::CLIENTS_CREATE_ROUTE);
+        // Validar documento duplicado
+        if ($document_type && $document_number) {
+          $searchDocument = $this->clientModel->findByDocument($document_type, $document_number);
+  
+          if ($searchDocument) {
+              $_SESSION['error'] = 'Este número de documento ya está registrado para el tipo seleccionado.';
+              return redirect(self::CLIENTS_CREATE_ROUTE);
+          }
         }
 
         // Validar teléfono duplicado (si se ingresó)
@@ -119,8 +122,8 @@ class ClientController
         $document_type = $_POST['document_type'] ?? '';
         $document_number = trim($_POST['document_number'] ?? '');
 
-        if (!$name || !$document_type || !$document_number) {
-            $_SESSION['error'] = 'Nombre, tipo de documento y número de documento son obligatorios.';
+        if (!$name) {
+            $_SESSION['error'] = 'Nombre es obligatorio.';
             return redirect(self::CLIENTS_EDIT_ROUTE . $id);
         }
 
@@ -133,13 +136,16 @@ class ClientController
             }
         }
 
-        $validateDocument = $this->clientModel->findByDocumentAndId($document_type, $document_number, $id);
+        // Validar documento duplicado
+        if ($document_type && $document_number) {
 
-        if ($validateDocument) {
-            $_SESSION['error'] = 'Este número de documento ya está registrado para el tipo seleccionado.';
-            return redirect(self::CLIENTS_EDIT_ROUTE . $id);
+          $validateDocument = $this->clientModel->findByDocumentAndId($document_type, $document_number, $id);
+  
+          if ($validateDocument) {
+              $_SESSION['error'] = 'Este número de documento ya está registrado para el tipo seleccionado.';
+              return redirect(self::CLIENTS_EDIT_ROUTE . $id);
+          }
         }
-
 
         // Validar teléfono duplicado (si se ingresó)
         if ($phone) {
@@ -201,22 +207,6 @@ class ClientController
             'cars' => $cars,
             'photos' => $photos
         ]);
-    }
-
-    public function storeCar()
-    {
-        (new AuthMiddleware())->handle();
-        (new PermissionMiddleware('view_clients'))->handle();
-
-        $this->carModel->create([
-            'client_id' => $_POST['client_id'],
-            'marca' => $_POST['brand'],
-            'modelo' => $_POST['model'],
-            'placa' => $_POST['plate'],
-            'year' => $_POST['year']
-        ]);
-
-        return redirect('/clients/show?id=' . $_POST['client_id']);
     }
 
     public function uploadPhoto()

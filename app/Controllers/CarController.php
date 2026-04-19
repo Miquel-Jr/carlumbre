@@ -256,6 +256,49 @@ class CarController
         $this->carModel->delete($id);
 
         $_SESSION['success'] = 'Auto eliminado correctamente.';
+
+        $plates = $_GET['plate'] ?? null;
+        if ($plates) {
+          return redirect('/clients/cars/plates');
+        }
         return redirect(self::CARS_LISTING_URL . $clientId);
+    }
+
+    public function plates()
+    {
+        (new AuthMiddleware())->handle();
+        (new PermissionMiddleware('view_clients'))->handle();
+
+        $search = $_GET['search'] ?? null;
+        $carsWithPlates = $this->carModel->getCarsWithPlates($search);
+
+        foreach ($carsWithPlates as &$car) {
+            $car['photos'] = $this->carModel->getPhotos($car['car_id']);
+        }
+        unset($car);
+
+        return view('clients/cars/plates', [
+            'cars' => $carsWithPlates,
+        ]);
+    }
+
+    public function quotes()
+    {
+        (new AuthMiddleware())->handle();
+        (new PermissionMiddleware('view_clients'))->handle();
+
+        $carId = $_GET['car_id'] ?? null;
+        if (!$carId) {
+            return view(self::ERROR_PAGE);
+        }
+        $car = $this->carModel->find($carId);
+        $photos = $this->carModel->getPhotos($carId);
+        $quotes = $this->quoteModel->getByCarId($carId);
+
+        return view('clients/cars/quotes', [
+            'car' => $car,
+            'photos' => $photos,
+            'quotes' => $quotes,
+        ]);
     }
 }

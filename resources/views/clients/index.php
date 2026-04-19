@@ -24,8 +24,7 @@
     <form method="GET" action="/clients" class="mb-3 row g-2">
       <div class="col-md-6">
         <input type="text" name="search" class="form-control" placeholder="Buscar por nombre, email o teléfono"
-          data-debounce-search data-debounce-ms="500"
-          value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+          data-debounce-search data-debounce-ms="500" value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
       </div>
       <div class="col-md-2">
         <button class="btn btn-primary w-100">Buscar</button>
@@ -34,8 +33,10 @@
         <button class="btn btn-secondary w-100" type="button" onclick="window.location='/clients'">Limpiar</button>
       </div>
     </form>
-
-    <a href="/clients/create" class="btn btn-success mb-3">Agregar Cliente</a>
+    <div class="d-flex justify-content-between mb-3">
+      <a href="/clients/create" class="btn btn-success mb-3">Agregar Cliente</a>
+      <a href="/clients/cars/plates" class="btn btn-primary mb-3">Ver Autos</a>
+    </div>
 
     <table class="table table-striped table-bordered table-mobile-cards">
       <thead class="table-dark">
@@ -57,8 +58,10 @@
             $documentTypeName = 'DNI';
           } elseif ($client['document_type'] === '2') {
             $documentTypeName = 'RUC';
-          } else {
+          } elseif ($client['document_type'] === '3') {
             $documentTypeName = 'Pasaporte';
+          } else {
+            $documentTypeName = 'N/A';
           }
         ?>
         <tr class="clickable">
@@ -114,7 +117,6 @@
       }
     });
   }
-
   </script>
 
 </body>

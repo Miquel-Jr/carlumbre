@@ -43,6 +43,8 @@ $router->get('/clients/cars/edit', 'CarController@edit');
 $router->post('/clients/cars/update', 'CarController@update');
 $router->get('/clients/cars/delete', 'CarController@delete');
 $router->get('/clients/cars/delete-photo', 'CarPhotoController@deletePhoto');
+$router->get('/clients/cars/plates', 'CarController@plates');
+$router->get('/clients/cars/quotes', 'CarController@quotes');
 
 $router->get('/services', 'ServiceController@index');
 $router->get('/services/create', 'ServiceController@create');

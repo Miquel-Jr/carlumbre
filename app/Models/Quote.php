@@ -145,4 +145,23 @@ class Quote
         $stmt->execute(['client_id' => $clientId]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
+
+    public function getByCarId($carId)
+    {
+        $db = Database::connect();
+
+        $stmt = $db->prepare("SELECT 
+                q.*,
+                wo.id AS work_order_id,
+                c.name AS client_name,
+                CONCAT(car.brand, ' ', car.model, ' - ', car.plate) AS car_info
+            FROM quotes q
+            JOIN clients c ON c.id = q.client_id
+            JOIN cars car ON car.id = q.car_id
+            LEFT JOIN work_orders wo ON wo.quote_id = q.id
+            WHERE q.car_id = :car_id
+            ORDER BY q.created_at DESC");
+        $stmt->execute(['car_id' => $carId]);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

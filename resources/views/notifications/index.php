@@ -61,7 +61,8 @@
         <div class="col-md-3">
           <select name="status" class="form-select">
             <option value="">Todos los estados</option>
-            <option value="sent" <?= ($currentStatus === 'sent') ? 'selected' : '' ?>>Enviados</option>
+            <option value="sent" <?= ($currentStatus === 'opened' || $currentStatus === 'sent') ? 'selected' : '' ?>>
+              Enviados</option>
             <option value="failed" <?= ($currentStatus === 'failed') ? 'selected' : '' ?>>Fallidos</option>
             <option value="pending" <?= ($currentStatus === 'pending') ? 'selected' : '' ?>>Pendientes</option>
           </select>
@@ -99,7 +100,7 @@
             <td><?= htmlspecialchars($notification['service_name'] ?? 'N/A') ?></td>
             <td><?= htmlspecialchars($notification['phone_number']) ?></td>
             <td>
-              <?php if ($notification['status'] === 'sent'): ?>
+              <?php if (in_array($notification['status'], ['opened', 'sent'], true)): ?>
               <span class="badge bg-success">Enviado</span>
               <?php elseif ($notification['status'] === 'failed'): ?>
               <span class="badge bg-danger"
@@ -118,23 +119,24 @@
               <?php endif; ?>
             </td>
             <td>
+              <?php $isSent = in_array($notification['status'], ['opened', 'sent'], true); ?>
               <button type="button" class="btn btn-sm btn-outline-secondary"
-                onclick="openMessageEditor('<?= (int) $notification['id'] ?>', <?= htmlspecialchars(json_encode($notification['message_content'])) ?>)">
-                Ver / Editar mensaje
+                onclick="openMessageEditor('<?= (int) $notification['id'] ?>', <?= htmlspecialchars(json_encode($notification['message_content'])) ?>, <?= $isSent ? 'false' : 'true' ?>)">
+                <?= $isSent ? 'Ver mensaje' : 'Ver / Editar mensaje' ?>
               </button>
             </td>
             <td>
               <?php if ($notification['status'] === 'failed'): ?>
               <button type="button" class="btn btn-sm btn-warning"
                 onclick="resendNotification('<?= $notification['id'] ?>', <?= htmlspecialchars(json_encode($notification['message_content'])) ?>, true)">
-                Reenviar
+                Reabrir chat
               </button>
               <?php endif; ?>
 
               <?php if ($notification['status'] === 'pending'): ?>
               <button type="button" class="btn btn-sm btn-warning"
                 onclick="resendNotification('<?= $notification['id'] ?>', <?= htmlspecialchars(json_encode($notification['message_content'])) ?>, false)">
-                Enviar
+                Abrir chat
               </button>
               <?php endif; ?>
 
@@ -193,6 +195,9 @@
 let messageEditorModal = null;
 let messageEditorIdInput = null;
 let messageEditorContentInput = null;
+let messageEditorSubmitButton = null;
+let messageEditorModalTitle = null;
+const pendingNotificationStorageKey = 'pendingNotificationDeliveryId';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -211,8 +216,11 @@ function initMessageEditorModal() {
   const messageEditorModalElement = document.getElementById('messageEditorModal');
   messageEditorIdInput = document.getElementById('messageEditorId');
   messageEditorContentInput = document.getElementById('messageEditorContent');
+  messageEditorSubmitButton = document.querySelector('#messageEditorForm button[type="submit"]');
+  messageEditorModalTitle = messageEditorModalElement?.querySelector('.modal-title');
 
-  if (!window.bootstrap || !messageEditorModalElement || !messageEditorIdInput || !messageEditorContentInput) {
+  if (!window.bootstrap || !messageEditorModalElement || !messageEditorIdInput || !messageEditorContentInput || !
+    messageEditorSubmitButton || !messageEditorModalTitle) {
     return false;
   }
 
@@ -220,7 +228,7 @@ function initMessageEditorModal() {
   return true;
 }
 
-function openMessageEditor(id, message) {
+function openMessageEditor(id, message, canEdit = true) {
   if (!initMessageEditorModal()) {
     Swal.fire({
       icon: 'error',
@@ -232,6 +240,9 @@ function openMessageEditor(id, message) {
 
   messageEditorIdInput.value = id;
   messageEditorContentInput.value = String(message ?? '');
+  messageEditorContentInput.readOnly = !canEdit;
+  messageEditorSubmitButton.style.display = canEdit ? '' : 'none';
+  messageEditorModalTitle.textContent = canEdit ? 'Editar mensaje de notificación' : 'Mensaje de notificación';
   messageEditorModal.show();
 }
 
@@ -255,9 +266,7 @@ function deleteNotification(id) {
 }
 
 function resendNotification(id, message, isResend = false) {
-  const url = `/notifications/resend?id=${id}`;
-
-  const actionText = isResend ? 'reenviar' : 'enviar';
+  const actionText = isResend ? 'abrir nuevamente' : 'abrir';
   const safeMessage = escapeHtml(message || '');
 
   Swal.fire({
@@ -271,10 +280,150 @@ function resendNotification(id, message, isResend = false) {
     cancelButtonText: 'Cancelar'
   }).then((result) => {
     if (result.isConfirmed) {
-      window.location.href = url;
+      prepareNotificationDelivery(id);
     }
   });
 }
+
+async function prepareNotificationDelivery(id) {
+  try {
+    const body = new URLSearchParams({
+      id: String(id)
+    });
+
+    const response = await fetch('/notifications/prepare-resend', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !(result?.success)) {
+      Swal.fire({
+        icon: 'error',
+        title: 'No se pudo abrir WhatsApp',
+        text: result?.message || 'Ocurrió un error al preparar el chat.'
+      });
+      return;
+    }
+
+    const notificationId = Number(result?.notification_id || 0);
+    if (!notificationId || !result?.url) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error interno',
+        text: 'No se pudo preparar la confirmación de la notificación.'
+      });
+      return;
+    }
+
+    sessionStorage.setItem(pendingNotificationStorageKey, String(notificationId));
+
+    const whatsappWindow = window.open(result.url, '_blank');
+    if (!whatsappWindow) {
+      window.location.href = result.url;
+      return;
+    }
+
+    let hasLostFocus = false;
+
+    const onBlur = () => {
+      hasLostFocus = true;
+    };
+
+    const onFocus = () => {
+      if (!hasLostFocus) {
+        return;
+      }
+
+      window.removeEventListener('focus', onFocus);
+      promptNotificationDeliveryConfirmation(notificationId);
+    };
+
+    window.addEventListener('blur', onBlur, {
+      once: true
+    });
+    window.addEventListener('focus', onFocus);
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error de conexión',
+      text: 'No se pudo completar la solicitud. Inténtalo nuevamente.'
+    });
+  }
+}
+
+async function confirmNotificationDelivery(notificationId, wasSent) {
+  const body = new URLSearchParams({
+    notification_id: String(notificationId),
+    was_sent: wasSent ? '1' : '0'
+  });
+
+  const response = await fetch('/notifications/confirm-delivery', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || !(result?.success)) {
+    throw new Error(result?.message || 'No se pudo actualizar la notificación.');
+  }
+
+  sessionStorage.removeItem(pendingNotificationStorageKey);
+  return result;
+}
+
+async function promptNotificationDeliveryConfirmation(notificationId) {
+  const result = await Swal.fire({
+    icon: 'question',
+    title: '¿Llegaste a enviar el mensaje?',
+    text: 'Confirma el estado final de este envío de WhatsApp.',
+    showCancelButton: true,
+    showDenyButton: true,
+    confirmButtonText: 'Sí, enviado',
+    denyButtonText: 'No, faltó enviar',
+    cancelButtonText: 'Más tarde'
+  });
+
+  if (result.isDismissed) {
+    return;
+  }
+
+  try {
+    const wasSent = result.isConfirmed;
+    const updateResult = await confirmNotificationDelivery(notificationId, wasSent);
+
+    Swal.fire({
+      icon: 'success',
+      title: wasSent ? 'Marcado como enviado' : 'Marcado como pendiente',
+      text: updateResult?.message || 'Estado actualizado correctamente.'
+    }).then(() => {
+      window.location.reload();
+    });
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'No se pudo actualizar el estado',
+      text: error?.message || 'Ocurrió un error inesperado.'
+    });
+  }
+}
+
+window.addEventListener('load', () => {
+  const pendingId = Number(sessionStorage.getItem(pendingNotificationStorageKey) || 0);
+  if (pendingId > 0) {
+    promptNotificationDeliveryConfirmation(pendingId);
+  }
+});
 </script>
 
 </html>

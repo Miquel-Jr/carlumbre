@@ -92,7 +92,7 @@
               <div class="col-4">
                 <div class="border rounded p-2">
                   <div class="small text-muted">Enviadas</div>
-                  <div class="h5 mb-0 text-success"><?= (int) ($notificationsStats['sent'] ?? 0) ?></div>
+                  <div class="h5 mb-0 text-success\"><?= (int) ($notificationsStats['sent'] ?? 0) ?></div>
                 </div>
               </div>
               <div class="col-4">

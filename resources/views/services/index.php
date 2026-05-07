@@ -11,6 +11,8 @@
 
   <?php
     $servicesPreviewMap = [];
+    $whatsappEligibleClients = [];
+
     if (!empty($services)) {
         foreach ($services as $serviceItem) {
             $servicesPreviewMap[$serviceItem['id']] = [
@@ -19,6 +21,20 @@
                 'price' => isset($serviceItem['price']) ? number_format((float)$serviceItem['price'], 2) : '0.00'
             ];
         }
+    }
+
+    if (!empty($clients)) {
+      foreach ($clients as $clientItem) {
+        $phoneDigits = preg_replace('/\D+/', '', (string) ($clientItem['phone'] ?? ''));
+
+        if (strlen($phoneDigits) === 11 && str_starts_with($phoneDigits, '51')) {
+          $phoneDigits = substr($phoneDigits, 2);
+        }
+
+        if (preg_match('/^\d{9}$/', $phoneDigits)) {
+          $whatsappEligibleClients[] = $clientItem;
+        }
+      }
     }
     ?>
 
@@ -113,9 +129,9 @@
   <div class="modal fade" id="whatsappModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
       <div class="modal-content">
-        <form method="POST" action="/services/whatsapp" id="whatsappForm">
+        <form method="POST" action="/services/whatsapp/prepare" id="whatsappForm">
           <div class="modal-header">
-            <h5 class="modal-title">Enviar WhatsApp</h5>
+            <h5 class="modal-title">Abrir chats por WhatsApp</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -125,30 +141,30 @@
               Servicio seleccionado: <strong id="modalServiceName">-</strong>
             </p>
 
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <strong>Clientes</strong>
-              <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleClientsBtn">Desmarcar
-                todos</button>
+            <div class="mb-2">
+              <strong>Cliente</strong>
+            </div>
+
+            <div class="mb-2">
+              <input type="text" class="form-control" id="clientSearchInput"
+                placeholder="Buscar cliente por nombre o teléfono...">
             </div>
 
             <div class="border rounded p-3" style="max-height: 320px; overflow-y: auto;">
-              <?php if (!empty($clients)): ?>
-              <?php foreach ($clients as $client): ?>
-              <div class="form-check mb-2">
-                <input class="form-check-input client-checkbox" type="checkbox" name="client_ids[]"
-                  value="<?= $client['id'] ?>" id="client_<?= $client['id'] ?>" checked>
+              <?php if (!empty($whatsappEligibleClients)): ?>
+              <?php foreach ($whatsappEligibleClients as $client): ?>
+              <div class="form-check mb-2 client-item">
+                <input class="form-check-input client-radio" type="radio" name="client_id" value="<?= $client['id'] ?>"
+                  id="client_<?= $client['id'] ?>"
+                  data-phone="<?= htmlspecialchars((string) ($client['phone'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                 <label class="form-check-label" for="client_<?= $client['id'] ?>">
                   <?= htmlspecialchars($client['name']) ?>
-                  <?php if (!empty($client['phone'])): ?>
-                  - <?= htmlspecialchars($client['phone']) ?>
-                  <?php else: ?>
-                  - <span class="text-danger">Sin teléfono</span>
-                  <?php endif; ?>
+                  - <?= htmlspecialchars((string) ($client['phone'] ?? '')) ?>
                 </label>
               </div>
               <?php endforeach; ?>
               <?php else: ?>
-              <p class="text-muted mb-0">No hay clientes registrados.</p>
+              <p class="text-muted mb-0">No hay clientes con teléfono válido de 9 dígitos.</p>
               <?php endif; ?>
             </div>
 
@@ -158,14 +174,14 @@
               </label>
               <textarea class="form-control" id="modalFinalMessage" name="final_message" rows="8" required></textarea>
               <small class="text-muted">
-                Puedes modificar el texto antes de enviar. Usa {cliente} si quieres que el nombre se reemplace
-                automáticamente por cada cliente seleccionado.
+                Selecciona un solo cliente. El teléfono debe tener formato de 9 dígitos (ejemplo: 987654321).
+                Puedes usar {cliente} para reemplazar el nombre automáticamente.
               </small>
             </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Enviar</button>
+            <button type="submit" class="btn btn-primary">Continuar</button>
           </div>
         </form>
       </div>
@@ -203,16 +219,19 @@ const whatsappModal = new bootstrap.Modal(whatsappModalElement);
 const modalServiceId = document.getElementById('modalServiceId');
 const modalServiceName = document.getElementById('modalServiceName');
 const modalFinalMessage = document.getElementById('modalFinalMessage');
-const clientCheckboxes = document.querySelectorAll('.client-checkbox');
-const toggleClientsBtn = document.getElementById('toggleClientsBtn');
+const clientRadios = document.querySelectorAll('.client-radio');
+const clientItems = document.querySelectorAll('.client-item');
+const clientSearchInput = document.getElementById('clientSearchInput');
+const whatsappForm = document.getElementById('whatsappForm');
 const servicesPreviewMap = <?= json_encode($servicesPreviewMap, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+const pendingConfirmationStorageKey = 'pendingWhatsappNotificationId';
 
 function buildDefaultMessage(service) {
   const serviceName = service?.name || 'Servicio';
-  const serviceDescription = service?.description || '';
+  const serviceDescription = service?.description ? `Descripción: ${service.description}\n\n` : '';
   const servicePrice = service?.price || '0.00';
-
-  return `¡Hola {cliente}! 👋\n\nDesde CarLumbre queremos ofrecerte nuestro servicio de:\n\n🔧 ${serviceName}\n\n${serviceDescription}\n\n💰 Precio: S/ ${servicePrice}\n\nRecuerda traer tu vehículo a tiempo para un mejor servicio.\n\n¿Te interesa? Contáctanos para agendar tu cita.\n\n📱 WhatsApp: +51979701851`;
+  const businessPhone = <?= json_encode(whatsappBusinessPhone(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+  return `¡Hola {cliente}!\n\nDesde CarLumbre queremos ofrecerte nuestro servicio de:\n\nServicio: ${serviceName}\n\n${serviceDescription}Precio: S/ ${servicePrice}\n\nRecuerda traer tu vehículo a tiempo para un mejor servicio.\n\n¿Te interesa? Contáctanos para agendar tu cita.\n\nWhatsApp: ${businessPhone}`;
 }
 
 document.querySelectorAll('.btn-whatsapp').forEach((button) => {
@@ -224,48 +243,210 @@ document.querySelectorAll('.btn-whatsapp').forEach((button) => {
     modalServiceId.value = serviceId;
     modalServiceName.textContent = serviceName;
     modalFinalMessage.value = buildDefaultMessage(serviceData);
-
-    clientCheckboxes.forEach((checkbox) => {
-      checkbox.checked = true;
+    clientRadios.forEach((radio) => {
+      radio.checked = false;
     });
-
-    toggleClientsBtn.textContent = 'Desmarcar todos';
+    if (clientSearchInput) {
+      clientSearchInput.value = '';
+      filterClients('');
+    }
 
     whatsappModal.show();
   });
 });
 
-toggleClientsBtn.addEventListener('click', () => {
-  const allChecked = Array.from(clientCheckboxes).every((checkbox) => checkbox.checked);
+function normalizeClientPhone(phone) {
+  const digits = String(phone || '').replace(/\D+/g, '');
+  if (!digits) {
+    return '';
+  }
 
-  clientCheckboxes.forEach((checkbox) => {
-    checkbox.checked = !allChecked;
+  if (digits.length === 11 && digits.startsWith('51')) {
+    return digits.slice(2);
+  }
+
+  return digits;
+}
+
+function filterClients(term) {
+  const normalizedTerm = String(term || '').toLowerCase().trim();
+
+  clientItems.forEach((item) => {
+    const label = item.querySelector('label');
+    const text = String(label?.textContent || '').toLowerCase();
+    item.style.display = text.includes(normalizedTerm) ? '' : 'none';
   });
+}
 
-  toggleClientsBtn.textContent = allChecked ? 'Marcar todos' : 'Desmarcar todos';
+clientSearchInput?.addEventListener('input', (event) => {
+  filterClients(event.target.value);
 });
 
-document.getElementById('whatsappForm').addEventListener('submit', function(e) {
-  const checkedCount = Array.from(clientCheckboxes).filter((checkbox) => checkbox.checked).length;
+whatsappForm.addEventListener('submit', async function(e) {
+  const selectedClient = Array.from(clientRadios).find((radio) => radio.checked);
   const finalMessage = (modalFinalMessage.value || '').trim();
 
-  if (checkedCount === 0) {
-    e.preventDefault();
+  e.preventDefault();
+
+  if (!selectedClient) {
     Swal.fire({
       icon: 'warning',
-      title: 'Selecciona clientes',
-      text: 'Debes seleccionar al menos un cliente para enviar WhatsApp.'
+      title: 'Selecciona un cliente',
+      text: 'Debes seleccionar un cliente para abrir WhatsApp.'
+    });
+    return;
+  }
+
+  const normalizedPhone = normalizeClientPhone(selectedClient.dataset.phone || '');
+  if (!/^\d{9}$/.test(normalizedPhone)) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Teléfono inválido',
+      text: 'El cliente debe tener un número válido de 9 dígitos.'
     });
     return;
   }
 
   if (!finalMessage) {
-    e.preventDefault();
     Swal.fire({
       icon: 'warning',
       title: 'Mensaje vacío',
-      text: 'Debes ingresar el mensaje final antes de enviar.'
+      text: 'Debes ingresar el mensaje final antes de continuar.'
     });
+    return;
+  }
+
+  try {
+    const formData = new FormData(whatsappForm);
+    const response = await fetch('/services/whatsapp/prepare', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !(result?.success)) {
+      Swal.fire({
+        icon: 'error',
+        title: 'No se pudo abrir WhatsApp',
+        text: result?.message || 'Ocurrió un error al preparar el envío.'
+      });
+      return;
+    }
+
+    const notificationId = Number(result?.notification_id || 0);
+    if (!notificationId) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error interno',
+        text: 'No se pudo registrar la notificación pendiente.'
+      });
+      return;
+    }
+
+    sessionStorage.setItem(pendingConfirmationStorageKey, String(notificationId));
+
+    const whatsappWindow = window.open(result.url, '_blank');
+    whatsappModal.hide();
+
+    if (!whatsappWindow) {
+      window.location.href = result.url;
+      return;
+    }
+
+    let hasLostFocus = false;
+
+    const onBlur = () => {
+      hasLostFocus = true;
+    };
+
+    const onFocus = () => {
+      if (!hasLostFocus) {
+        return;
+      }
+
+      window.removeEventListener('focus', onFocus);
+      promptNotificationConfirmation(notificationId);
+    };
+
+    window.addEventListener('blur', onBlur, {
+      once: true
+    });
+    window.addEventListener('focus', onFocus);
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error de conexión',
+      text: 'No se pudo completar la solicitud. Inténtalo nuevamente.'
+    });
+  }
+});
+
+async function updateNotificationAfterWhatsapp(notificationId, wasSent) {
+  const body = new URLSearchParams({
+    notification_id: String(notificationId),
+    was_sent: wasSent ? '1' : '0'
+  });
+
+  const response = await fetch('/services/whatsapp/confirm', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    body
+  });
+
+  const result = await response.json();
+  if (!response.ok || !(result?.success)) {
+    throw new Error(result?.message || 'No se pudo actualizar la notificación.');
+  }
+
+  sessionStorage.removeItem(pendingConfirmationStorageKey);
+  return result;
+}
+
+async function promptNotificationConfirmation(notificationId) {
+  const result = await Swal.fire({
+    icon: 'question',
+    title: '¿Llegaste a enviar el mensaje?',
+    text: 'Confirma si el mensaje se envió por WhatsApp para actualizar el estado.',
+    showCancelButton: true,
+    showDenyButton: true,
+    confirmButtonText: 'Sí, enviado',
+    denyButtonText: 'No, faltó enviar',
+    cancelButtonText: 'Más tarde'
+  });
+
+  if (result.isDismissed) {
+    return;
+  }
+
+  try {
+    const wasSent = result.isConfirmed;
+    const updateResult = await updateNotificationAfterWhatsapp(notificationId, wasSent);
+
+    Swal.fire({
+      icon: 'success',
+      title: wasSent ? 'Marcado como enviado' : 'Marcado como pendiente',
+      text: updateResult?.message || 'Estado actualizado correctamente.'
+    });
+  } catch (error) {
+    Swal.fire({
+      icon: 'error',
+      title: 'No se pudo actualizar el estado',
+      text: error?.message || 'Ocurrió un error inesperado.'
+    });
+  }
+}
+
+window.addEventListener('load', () => {
+  const pendingId = Number(sessionStorage.getItem(pendingConfirmationStorageKey) || 0);
+  if (pendingId > 0) {
+    promptNotificationConfirmation(pendingId);
   }
 });
 </script>

@@ -53,6 +53,8 @@ $router->get('/services/edit', 'ServiceController@edit');
 $router->post('/services/update', 'ServiceController@update');
 $router->get('/services/delete', 'ServiceController@delete');
 $router->post('/services/whatsapp', 'WhatsappController@send');
+$router->post('/services/whatsapp/prepare', 'WhatsappController@prepare');
+$router->post('/services/whatsapp/confirm', 'WhatsappController@confirm');
 
 $router->get('/quotes', 'QuoteController@index');
 $router->get('/quotes/create', 'QuoteController@create');
@@ -83,4 +85,6 @@ $router->get('/warranties', 'WarrantyController@index');
 $router->get('/notifications', 'NotificationController@index');
 $router->post('/notifications/update-message', 'NotificationController@updateMessage');
 $router->get('/notifications/resend', 'NotificationController@resend');
+$router->post('/notifications/prepare-resend', 'NotificationController@prepareResend');
+$router->post('/notifications/confirm-delivery', 'NotificationController@confirmDelivery');
 $router->get('/notifications/delete', 'NotificationController@delete');

@@ -205,6 +205,8 @@ class WarrantyValidity
     $this->updateExpiredStatuses();
 
     $db = Database::connect();
+    $whatsappModel = new Whatsapp();
+    $businessPhone = $whatsappModel->getBusinessPhoneDisplay();
 
     $stmt = $db->query(" 
             SELECT
@@ -253,7 +255,7 @@ class WarrantyValidity
         . "Le informamos que la garantía del servicio '{$row['service_description']}' venció el {$expiresAt}.\n\n"
         . "Para mantener su vehículo en óptimas condiciones, le recomendamos programar su próximo mantenimiento preventivo.\n\n"
         . "Quedamos atentos para ayudarle a agendar su cita.\n\n"
-        . "📱 WhatsApp: +51979701851";
+        . "WhatsApp: {$businessPhone}";
 
       $notificationId = $notificationModel->create([
         'client_id' => (int) $row['client_id'],

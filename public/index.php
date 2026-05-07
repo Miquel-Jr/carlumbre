@@ -8,7 +8,7 @@ session_start();
 
 use Dotenv\Dotenv;
 
-// 🔹 Solo cargar .env si existe (local)
+// Solo cargar .env si existe (local)
 $envPath = dirname(__DIR__) . '/.env';
 
 if (file_exists($envPath)) {

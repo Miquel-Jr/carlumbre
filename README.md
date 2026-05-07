@@ -124,14 +124,12 @@ carlumbre/
 
 ## 6) Servicios externos conectados
 
-### 6.1 WhatsApp Cloud API (Meta)
-- Uso: envío/reenvío de mensajes desde notificaciones
+### 6.1 WhatsApp via wa.me
+- Uso: apertura de chats con mensaje prellenado desde servicios y notificaciones
 - Configuración: `config/whatsapp.php`
 - Variables de entorno:
-  - `WA_PHONE_NUMBER_ID`
-  - `WA_ACCESS_TOKEN`
-  - `WA_WEBHOOK_VERIFY`
-  - `WA_API_VERSION` (en config, default `v21.0`)
+  - `WA_BUSINESS_PHONE`
+  - `WA_DEFAULT_COUNTRY_CODE`
 - Implementación principal:
   - `app/Core/Whatsapp.php`
   - `app/Models/Whatsapp.php`
@@ -163,9 +161,8 @@ DB_NAME=carlumbre
 DB_USER=root
 DB_PASS=
 
-WA_PHONE_NUMBER_ID=
-WA_ACCESS_TOKEN=
-WA_WEBHOOK_VERIFY=
+WA_BUSINESS_PHONE=51979701851
+WA_DEFAULT_COUNTRY_CODE=51
 
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=

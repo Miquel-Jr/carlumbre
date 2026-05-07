@@ -4,21 +4,13 @@ namespace App\Core;
 
 class Whatsapp
 {
-    public static function connect()
+    public static function config(): array
     {
         $config = require __DIR__ . '/../../config/whatsapp.php';
 
-        try {
-
-            return [
-                "url" => "https://graph.facebook.com/{$config['WA_API_VERSION']}/{$config['WA_PHONE_NUMBER_ID']}/messages",
-                "token" => $config['WA_ACCESS_TOKEN']
-            ];
-        } catch (\Exception $e) {
-            error_log($e->getMessage());
-            http_response_code(500);
-            require dirname(__DIR__, 2) . '/resources/views/errors/whatsapp.php';
-            exit;
-        }
+        return [
+            'business_phone' => preg_replace('/\D+/', '', (string) ($config['WA_BUSINESS_PHONE'] ?? '')),
+            'country_code' => preg_replace('/\D+/', '', (string) ($config['WA_DEFAULT_COUNTRY_CODE'] ?? '51')) ?: '51',
+        ];
     }
 }

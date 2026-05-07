@@ -48,6 +48,46 @@ if (!function_exists('menu')) {
     }
 }
 
+if (!function_exists('whatsappConfig')) {
+    function whatsappConfig(): array
+    {
+        static $config = null;
+
+        if ($config === null) {
+            $config = \App\Core\Whatsapp::config();
+        }
+
+        return $config;
+    }
+}
+
+if (!function_exists('whatsappBusinessPhone')) {
+    function whatsappBusinessPhone(): string
+    {
+        $phone = whatsappConfig()['business_phone'] ?? '';
+        return $phone !== '' ? '+' . $phone : '';
+    }
+}
+
+if (!function_exists('whatsappBusinessLink')) {
+    function whatsappBusinessLink(?string $message = null): string
+    {
+        $phone = whatsappConfig()['business_phone'] ?? '';
+
+        if ($phone === '') {
+            return '#';
+        }
+
+        $url = 'https://web.whatsapp.com/send?phone=' . $phone;
+
+        if ($message !== null && $message !== '') {
+            $url .= '&text=' . rawurlencode($message);
+        }
+
+        return $url;
+    }
+}
+
 if (!function_exists('firstAccessibleUrl')) {
     function firstAccessibleUrl(?string $default = '/dashboard'): string
     {

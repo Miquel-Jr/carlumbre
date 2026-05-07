@@ -530,7 +530,7 @@
         <img src="<?= $instagramIcon ?>" alt="Instagram" width="16" style="vertical-align: middle;">
       </a> ·
 
-      <a href="https://wa.me/+51979701851" target="_blank">
+      <a href="<?= htmlspecialchars(whatsappBusinessLink()) ?>" target="_blank">
         <img src="<?= $whatsappIcon ?>" alt="WhatsApp" width="16" style="vertical-align: middle;">
       </a>
     </div>

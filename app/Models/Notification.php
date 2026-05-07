@@ -24,7 +24,9 @@ class Notification
             $params['search'] = "%{$search}%";
         }
 
-        if ($status) {
+        if ($status === 'sent') {
+            $query .= " AND n.status IN ('sent', 'opened')";
+        } elseif ($status) {
             $query .= " AND n.status = :status";
             $params['status'] = $status;
         }
@@ -79,7 +81,7 @@ class Notification
         $params = ['id' => $id];
 
         foreach (['status', 'error_message', 'whatsapp_message_id', 'sent_at', 'message_content'] as $field) {
-            if (isset($data[$field])) {
+            if (array_key_exists($field, $data)) {
                 $fields[] = "{$field} = :{$field}";
                 $params[$field] = $data[$field];
             }
@@ -107,7 +109,7 @@ class Notification
         $db = Database::connect();
         $stmt = $db->query("SELECT 
             COUNT(*) as total,
-            SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as sent,
+            SUM(CASE WHEN status IN ('opened', 'sent') THEN 1 ELSE 0 END) as sent,
             SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
             SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending
             FROM {$this->table} 

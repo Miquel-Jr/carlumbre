@@ -118,7 +118,7 @@ $menuItems = menu();
 <aside id="mobileMenu" class="mobile-menu-drawer d-xxl-none" aria-hidden="true">
   <div class="p-3 border-bottom border-secondary d-flex justify-content-between align-items-center">
     <strong>Menú</strong>
-    <button class="btn btn-sm btn-outline-light" type="button" id="mobileMenuClose">✕</button>
+    <button class="btn btn-sm btn-outline-light" type="button" id="mobileMenuClose">Cerrar</button>
   </div>
 
   <div class="p-3">
